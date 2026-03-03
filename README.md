@@ -1,4 +1,4 @@
-# Apprentice's Codex
+# Lucis Nox
 
 ## 概要
 
