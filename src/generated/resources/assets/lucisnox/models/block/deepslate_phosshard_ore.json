@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "lucisnox:block/deepslate_phosshard_ore"
+  }
+}
