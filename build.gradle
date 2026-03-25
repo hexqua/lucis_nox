@@ -13,7 +13,18 @@ version = mod_version
 group = mod_group_id
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+    maven {
+        name = 'BlameJared'
+        url = 'https://maven.blamejared.com/'
+    }
+    maven {
+        name = 'TheIllusiveC4'
+        url = 'https://maven.theillusivec4.top/'
+    }
 }
 
 base {
@@ -78,7 +89,9 @@ configurations {
 }
 
 dependencies {
-    // 必要になったら依存を入れる.
+    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}"
+    implementation "vazkii.patchouli:Patchouli:${patchouli_version}"
+    implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -87,6 +100,9 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             minecraft_version_range: minecraft_version_range,
             neo_version            : neo_version,
             loader_version_range   : loader_version_range,
+            geckolib_version       : geckolib_version,
+            patchouli_version      : patchouli_version,
+            curios_version         : curios_version,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
