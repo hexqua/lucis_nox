@@ -92,11 +92,31 @@ Get-ChildItem build\libs\*.jar
 - リグレッション確認: 依存 MOD バージョン条件を変更した場合、`src/main/templates/META-INF/neoforge.mods.toml` と `gradle.properties` の整合性を確認する。
 
 ## 7. ドキュメント更新
-- コード変更時に更新すべきファイル: `gradle.properties`（バージョン）、`build.gradle`（依存/タスク）、`src/main/templates/META-INF/neoforge.mods.toml`（依存条件）、`README.md`（仕様/導入手順）、`THIRD_PARTY_NOTICES.md`（ライセンス）。
+- コード変更時に更新すべきファイル: `gradle.properties`（バージョン）、`build.gradle`（依存/タスク）、`src/main/templates/META-INF/neoforge.mods.toml`（依存条件）、`README.md`（仕様/導入手順）、`THIRD_PARTY_NOTICES.md`（ライセンス）、`.codex/skills/**`（エージェント向け手順）。
 - 更新ルール: 実装変更と同一 PR/コミット内で関連ドキュメントを更新し、差分の理由が追跡できる状態にする。
 - 更新ルール: 実行手順や開発フローに影響する変更は `AGENTS.md` も同時更新する。
 
-## 8. Codex運用上の注意（コメント保全/文字化け対策）
+## 8. Git 運用
+- Codex はローカルでの `git status`、`git diff`、`git add`、`git commit` までは行ってよい。
+- Codex がコミットする場合、後から取り込み元と意図を追いやすい日本語コミットメッセージを書く。
+- リモートへの読み取り系操作は許可する。例: `git fetch`、`git pull --ff-only`、リモート参照の確認。
+- リモートへの書き込み系操作は人間のみが行う。例: `git push`、PR 作成、レビュー送信、issue/comment の投稿、remote ブランチの更新。
+- 情報漏洩防止のため、Codex は remote に対して GET 相当を超える操作を提案なく実行しない。
+
+## 9. ブランチ間取り込み（1.21.1 -> 1.20.1）
+- 基本方針: `main`（1.21.1 / NeoForge）を主系統とし、`1.20.1-main`（1.20.1 / Forge）への反映は backport で行う。
+- 基本方針: `main` と `1.20.1-main` の直接 `merge` は原則禁止とし、必要な場合は事前合意を必須とする。
+- 基本方針: `merge` コミットの直接 `cherry-pick`（`git cherry-pick -m` を含む）と、擬似的なスカッシュコミットの backport は禁止とし、取り込み対象は個別コミット単位で扱う。
+- 実作業では `.codex/skills/backport-1-20-1-forge` を使用する。
+- AGENTS.md では次の原則だけを常設ルールとして保持する。
+1. 取り込み前に対象コミットを個別 SHA で確定し、`git cherry-pick -x` を使う。
+2. 1 機能を独立した連続コミット系列として保ち、無関係な整形・rename・広域整理を同じ backport 対象に混ぜない。
+3. generated や resource の削除・改名・出力パス変更を含む作業では、影響ディレクトリの stale 出力混入を前提に確認する。
+4. `1.20.1-main` 固有の loader/version 向け修正は原則そのブランチで閉じ、`main` への逆流は共通バグと判断できる場合だけを別コミットで扱う。
+- 標準の同期方向は `main` から `1.20.1-main` のみとし、forward-port は本リポジトリの常設運用に含めない。
+- 同種コンフリクトの再解決コストを下げるため、`git config rerere.enabled true` を推奨する。
+
+## 10. Codex運用上の注意（コメント保全/文字化け対策）
 - 原因整理: Windows PowerShell 5.1（コードページ 932）で `Get-Content` 既定読み取りを使うと、UTF-8日本語が文字化けして表示される。
 - 対策: 日本語を含むファイルをターミナルで読む前に、`[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)` を設定し、`Get-Content -Encoding UTF8` を使用する。
 - 対策: PowerShell 5.1 で `Set-Content` / `Out-File` の既定エンコーディング書き込みは使わない（BOM付与や文字化け混入の原因になる）。
@@ -106,6 +126,6 @@ Get-ChildItem build\libs\*.jar
 - 対策: 変更後は `git diff` を確認し、依頼範囲外コメントの削除と日本語の文字化け差分があれば修正してから完了とする。
 - 対策: 必要に応じて `git diff | rg "^-\\s*(//|/\\*|\\*|#)"` でコメント削除行を検出し、依頼範囲内の変更かを確認する。
 
-## 9. 禁止事項
+## 11. 禁止事項
 - 事前合意なしで大規模リファクタをしない。
 - 機密情報をコミットしない。

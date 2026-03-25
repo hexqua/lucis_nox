@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backport 1.20.1 Forge"
+  short_description: "1.21.1から1.20.1 Forgeへ戻す標準手順"
+  default_prompt: "Use $backport-1-20-1-forge to backport selected 1.21.1 NeoForge commits into the 1.20.1 Forge branch."
