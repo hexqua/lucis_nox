@@ -5,5 +5,7 @@
   "block.lucisnox.phosshard_ore": "フォスシャード鉱石",
   "block.lucisnox.light_collector_jar": "集光の瓶",
 
-  "item.lucisnox.phosshard": "フォスシャード"
+  "item.lucisnox.phosshard": "フォスシャード",
+
+  "tooltip.lucisnox.light_collector_jar.licht": "リヒト: %s / %s"
 }

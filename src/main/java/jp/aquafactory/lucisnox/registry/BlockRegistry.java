@@ -1,6 +1,7 @@
 package jp.aquafactory.lucisnox.registry;
 
 import jp.aquafactory.lucisnox.LucisNox;
+import jp.aquafactory.lucisnox.block.lightcollectorjar.LightCollectorJar;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DropExperienceBlock;
@@ -19,6 +20,9 @@ public final class BlockRegistry {
     public static final DeferredBlock<DropExperienceBlock> DEEPSLATE_PHOSSHARD_ORE =
             BLOCKS.register("deepslate_phosshard_ore",
                     () -> new DropExperienceBlock(UniformInt.of(2, 5), phosshardOreProperties(Blocks.DEEPSLATE_IRON_ORE)));
+
+    public static final DeferredBlock<LightCollectorJar> LIGHT_COLLECTOR_JAR =
+            BLOCKS.register("light_collector_jar", () -> new LightCollectorJar());
 
     private BlockRegistry() {}
 

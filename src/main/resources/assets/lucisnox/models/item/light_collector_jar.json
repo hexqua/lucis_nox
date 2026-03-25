@@ -1,5 +1,5 @@
 {
-  "parent": "lusicnox:block/light_collector_jar",
+  "parent": "lucisnox:block/light_collector_jar",
   "display": {
     "thirdperson_righthand": {
       "rotation": [10, -45, 170],

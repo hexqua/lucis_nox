@@ -22,6 +22,7 @@ public final class CreativeTabRegistry {
                                 output.accept(ItemRegistry.PHOSSHARD.get());
                                 output.accept(ItemRegistry.PHOSSHARD_ORE.get());
                                 output.accept(ItemRegistry.DEEPSLATE_PHOSSHARD_ORE.get());
+                                output.accept(ItemRegistry.LIGHT_COLLECTOR_JAR.get());
                             })
                             .build());
 
