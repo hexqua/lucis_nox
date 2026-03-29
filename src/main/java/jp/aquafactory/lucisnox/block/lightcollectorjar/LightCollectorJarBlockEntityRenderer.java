@@ -25,6 +25,8 @@ public final class LightCollectorJarBlockEntityRenderer implements BlockEntityRe
     private static final float CENTER_Y = 6.5f / 16.0f;
     private static final float MIN_OUTER_CORE_SIZE = 1.9f / 16.0f;
     private static final float MAX_OUTER_CORE_SIZE = 3.5f / 16.0f;
+    private static final float ACTIVE_OUTER_CORE_SIZE = MAX_OUTER_CORE_SIZE * 1.5f;
+    private static final float ACTIVE_INNER_CORE_SCALE = 0.56f;
     private static final double MAX_RENDER_DISTANCE = 48.0;
     private static final double MAX_RENDER_DISTANCE_SQR = MAX_RENDER_DISTANCE * MAX_RENDER_DISTANCE;
 
@@ -50,16 +52,19 @@ public final class LightCollectorJarBlockEntityRenderer implements BlockEntityRe
         }
 
         var time = level.getGameTime() + partialTick + (blockEntity.getBlockPos().asLong() & 31L);
-        var colorFade = 0.5f + 0.5f * Mth.sin(time * 0.035f);
-        var generationRatio = LightCollectorJarBlockEntity.calculateGenerationPerSecond(level, blockEntity.getBlockPos())
+        var fillColorFade = 0.5f + 0.5f * Mth.sin(time * 0.035f);
+        var active = blockEntity.isActiveGenerationAt(level.getGameTime());
+        var generationRatio = active
+                ? 1.0f
+                : LightCollectorJarBlockEntity.calculateGenerationPerSecond(level, blockEntity.getBlockPos())
                 / (float) LightCollectorJarBlockEntity.MAX_GENERATION_PER_SECOND;
         var fillRatio = blockEntity.getFillRatio();
 
         if (fillRatio > 0.0f) {
             var fillMaxY = Mth.lerp(fillRatio, INNER_MIN_Y, INNER_MAX_Y);
-            var fillRed = mixChannel(colorFade, 255, 132);
-            var fillGreen = mixChannel(colorFade, 212, 188);
-            var fillBlue = mixChannel(colorFade, 120, 255);
+            var fillRed = mixChannel(fillColorFade, 255, 132);
+            var fillGreen = mixChannel(fillColorFade, 212, 188);
+            var fillBlue = mixChannel(fillColorFade, 120, 255);
 
             drawBox(
                     poseStack,
@@ -77,21 +82,27 @@ public final class LightCollectorJarBlockEntityRenderer implements BlockEntityRe
             );
         }
 
-        if (generationRatio <= 0.0f) {
+        if (!active && generationRatio <= 0.0f) {
             return;
         }
 
-        var coreRed = mixChannel(colorFade, 255, 72);
-        var coreGreen = mixChannel(colorFade, 168, 216);
-        var coreBlue = mixChannel(colorFade, 20, 255);
-        var outerCoreSize = Mth.lerp(generationRatio, MIN_OUTER_CORE_SIZE, MAX_OUTER_CORE_SIZE);
-        var innerCoreSize = outerCoreSize * 0.52f;
+        var coreColorFade = active
+                ? 0.5f + 0.5f * Mth.sin(time * 0.18f)
+                : fillColorFade;
+        var coreRed = active ? mixChannel(coreColorFade, 255, 96) : mixChannel(coreColorFade, 255, 72);
+        var coreGreen = active ? mixChannel(coreColorFade, 72, 244) : mixChannel(coreColorFade, 168, 216);
+        var coreBlue = active ? mixChannel(coreColorFade, 255, 186) : mixChannel(coreColorFade, 20, 255);
+        var outerCoreSize = active
+                ? ACTIVE_OUTER_CORE_SIZE
+                : Mth.lerp(generationRatio, MIN_OUTER_CORE_SIZE, MAX_OUTER_CORE_SIZE);
+        var innerCoreSize = outerCoreSize * (active ? ACTIVE_INNER_CORE_SCALE : 0.52f);
+        var rotationMultiplier = active ? 4.2f : 1.0f;
 
         poseStack.pushPose();
         poseStack.translate(CENTER_XZ, CENTER_Y, CENTER_XZ);
-        poseStack.mulPose(Axis.XP.rotationDegrees(time * 1.10f));
-        poseStack.mulPose(Axis.YP.rotationDegrees(time * 1.85f));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(time * 1.35f));
+        poseStack.mulPose(Axis.XP.rotationDegrees(time * 1.10f * rotationMultiplier));
+        poseStack.mulPose(Axis.YP.rotationDegrees(time * 1.85f * rotationMultiplier));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(time * 1.35f * rotationMultiplier));
         drawCenteredCube(poseStack, buffer.getBuffer(OUTER_CORE_RENDER_TYPE), outerCoreSize, coreRed, coreGreen, coreBlue, 255, true);
         drawCenteredCube(poseStack, buffer.getBuffer(INNER_CORE_RENDER_TYPE), innerCoreSize, 255, 255, 255, 255, false);
         poseStack.popPose();

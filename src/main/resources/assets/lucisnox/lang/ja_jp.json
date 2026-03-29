@@ -7,5 +7,7 @@
 
   "item.lucisnox.phosshard": "フォスシャード",
 
-  "tooltip.lucisnox.light_collector_jar.licht": "リヒト: %s / %s"
+  "tooltip.lucisnox.light_collector_jar.licht": "リヒト: %s / %s",
+
+  "ui.lucisnox.light_collector_jar.cant_insert_more": "これ以上入れられない！"
 }
