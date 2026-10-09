@@ -29,7 +29,7 @@ function Get-ConfiguredJdkHome {
         }
     }
 
-    foreach ($candidate in $candidates | Sort-Object Path -Unique) {
+    foreach ($candidate in $candidates) {
         if (Test-Path (Join-Path $candidate.Path 'bin\java.exe')) {
             return $candidate
         }
