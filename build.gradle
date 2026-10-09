@@ -245,6 +245,14 @@ tasks.register('checkTextEncodingHygiene') {
                 '\u8B5B',
         ]
         def halfwidthKatakana = ~/.*[\uFF66-\uFF9F].*/
+        // 単独の漢字では判定せず、UTF-8 を CP932 で誤読した既知の連続文字列だけを検出する。
+        // 検査定義自身を誤検出しないよう、誤変換後の文字列は Unicode エスケープで記述する。
+        def cp932MojibakeSequences = [
+                '\u879F\u753B\u5CE9', // 変更
+                '\u9AE2\u72D7\u5331', // 開発
+                '\u8711\u4F01\u52C1', // 削除
+                '\u8B0C\u4ED9\u7CA5', // 成功
+        ]
 
         textEncodingHygieneFiles.files.findAll { it.isFile() }.sort { it.path }.each { file ->
             byte[] bytes = file.bytes
@@ -272,8 +280,10 @@ tasks.register('checkTextEncodingHygiene') {
                 boolean skipMojibakeHeuristic = textEncodingMojibakeHeuristicSkips.contains(relativePath)
                 boolean hasReplacementCharacter = line.indexOf('\uFFFD') >= 0
                 def fragmentHitCount = suspiciousFragments.count { fragment -> line.contains(fragment) }
+                boolean hasCp932Mojibake = cp932MojibakeSequences.any { sequence -> line.contains(sequence) }
                 boolean hasLikelyMojibake = !skipMojibakeHeuristic
-                        && (fragmentHitCount >= 2 || (fragmentHitCount >= 1 && line ==~ halfwidthKatakana))
+                        && (hasCp932Mojibake || fragmentHitCount >= 2
+                            || (fragmentHitCount >= 1 && line ==~ halfwidthKatakana))
 
                 if (hasReplacementCharacter || hasLikelyMojibake) {
                     String excerpt = line.trim()
