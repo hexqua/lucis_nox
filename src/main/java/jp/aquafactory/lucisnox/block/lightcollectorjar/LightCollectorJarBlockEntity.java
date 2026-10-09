@@ -229,7 +229,7 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
         }
 
         var gameTime = level.getGameTime();
-        var updated = blockEntity.expireActiveGenerationIfNeeded(gameTime);
+        var updated = false;
 
         while ((blockEntity.lastCollectionGameTime + GENERATION_INTERVAL_TICKS) <= gameTime) {
             blockEntity.lastCollectionGameTime += GENERATION_INTERVAL_TICKS;
@@ -243,6 +243,11 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
             }
 
             blockEntity.storedLicht = Math.min(MAX_LICHT, blockEntity.storedLicht + generationPerSecond);
+            updated = true;
+        }
+
+        // 期限を消す前に未集計の周期を処理し、期限直前までの能動生成量を保持する。
+        if (blockEntity.expireActiveGenerationIfNeeded(gameTime)) {
             updated = true;
         }
 

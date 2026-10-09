@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_phosshard": {
+      "conditions": {
+        "items": [
+          {
+            "items": "lucisnox:phosshard"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "lucisnox:light_collector_jar"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_phosshard"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "lucisnox:light_collector_jar"
+    ]
+  }
+}
