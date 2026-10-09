@@ -34,8 +34,16 @@ base {
 // Mojang ships Java 21 to end users in 1.21.1, so mods should target Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
 neoForge {
     version = project.neo_version
+    addModdingDependenciesTo sourceSets.gameTest
 
     parchment {
         mappingsVersion = project.parchment_mappings_version
@@ -60,6 +68,8 @@ neoForge {
 
         gameTestServer {
             type = "gameTestServer"
+            sourceSet = sourceSets.gameTest
+            gameDirectory = file('run/gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
@@ -78,6 +88,8 @@ neoForge {
     mods {
         "${mod_id}" {
             sourceSet(sourceSets.main)
+            // GameTest は開発実行だけで読み込み、配布 jar には含めない。
+            sourceSet(sourceSets.gameTest)
         }
     }
 }
@@ -86,6 +98,8 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+    gameTestImplementation.extendsFrom implementation
+    gameTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
 dependencies {

@@ -56,6 +56,9 @@ Get-ChildItem build\libs\*.jar
 - 注記: 本プロジェクトでは Gradle Wrapper の実行はパス経由を前提にしないため、`./gradlew.bat` を使用する。
 - Lint/Format:
   `現時点では専用タスク未設定。必要時に追加する。`
+- 自動テスト: `./gradlew.bat runGameTestServer`。`src/gameTest` のテストを専用サーバーで実行する。実装変更時は `build` と併せて確認する。
+- データ生成: `./gradlew.bat runData`。生成結果を正とし、`src/generated/resources` の差分を確認して実装と一緒に扱う。
+- 作業台レシピ: `datagen/RecipeGenerator.java` の `buildRecipes` に `ShapedRecipeBuilder` / `ShapelessRecipeBuilder` で追加し、`lucisnox` 名前空間で保存する。
 
 ## 4. コーディング規約
 - 命名規則: クラス/インターフェースは `PascalCase`、メソッド/フィールド/ローカル変数は `camelCase`、定数は `UPPER_SNAKE_CASE` を使用する。

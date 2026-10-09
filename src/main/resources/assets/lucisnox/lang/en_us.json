@@ -3,6 +3,11 @@
 
   "block.lucisnox.deepslate_phosshard_ore": "Deepslate Phosshard Ore",
   "block.lucisnox.phosshard_ore": "Phosshard Ore",
+  "block.lucisnox.light_collector_jar": "Light Collector Jar",
 
-  "item.lucisnox.phosshard": "Phosshard"
+  "item.lucisnox.phosshard": "Phosshard",
+
+  "tooltip.lucisnox.light_collector_jar.licht": "Licht: %s / %s",
+
+  "ui.lucisnox.light_collector_jar.cant_insert_more": "Can't insert any more!"
 }

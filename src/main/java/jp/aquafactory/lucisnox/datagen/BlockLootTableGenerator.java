@@ -26,6 +26,7 @@ public final class BlockLootTableGenerator extends BlockLootSubProvider {
     protected void generate() {
         add(BlockRegistry.PHOSSHARD_ORE.get(), oreDrop(BlockRegistry.PHOSSHARD_ORE.get()));
         add(BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get(), oreDrop(BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get()));
+        dropSelf(BlockRegistry.LIGHT_COLLECTOR_JAR.get());
     }
 
     private LootTable.Builder oreDrop(Block block) {
@@ -42,7 +43,8 @@ public final class BlockLootTableGenerator extends BlockLootSubProvider {
     protected @NotNull Iterable<Block> getKnownBlocks() {
         return List.of(
                 BlockRegistry.PHOSSHARD_ORE.get(),
-                BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get()
+                BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get(),
+                BlockRegistry.LIGHT_COLLECTOR_JAR.get()
         );
     }
 }

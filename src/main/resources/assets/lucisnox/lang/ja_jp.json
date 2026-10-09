@@ -3,6 +3,11 @@
 
   "block.lucisnox.deepslate_phosshard_ore": "深層岩フォスシャード鉱石",
   "block.lucisnox.phosshard_ore": "フォスシャード鉱石",
+  "block.lucisnox.light_collector_jar": "集光の瓶",
 
-  "item.lucisnox.phosshard": "フォスシャード"
+  "item.lucisnox.phosshard": "フォスシャード",
+
+  "tooltip.lucisnox.light_collector_jar.licht": "リヒト: %s / %s",
+
+  "ui.lucisnox.light_collector_jar.cant_insert_more": "これ以上入れられない！"
 }

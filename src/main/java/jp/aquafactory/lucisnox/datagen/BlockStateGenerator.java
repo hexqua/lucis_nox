@@ -16,6 +16,7 @@ public final class BlockStateGenerator extends BlockStateProvider {
     protected void registerStatesAndModels() {
         simpleBlockWithItem(BlockRegistry.PHOSSHARD_ORE.get(), cubeAll(BlockRegistry.PHOSSHARD_ORE.get()));
         simpleBlockWithItem(BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get(), cubeAll(BlockRegistry.DEEPSLATE_PHOSSHARD_ORE.get()));
+        simpleBlock(BlockRegistry.LIGHT_COLLECTOR_JAR.get(), models().getExistingFile(modLoc("block/light_collector_jar")));
         itemModels().basicItem(ItemRegistry.PHOSSHARD.get());
     }
 }

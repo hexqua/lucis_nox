@@ -21,5 +21,6 @@ public final class DataGenerator {
         event.addProvider(new BlockTagGenerator(event.getGenerator().getPackOutput(), event.getLookupProvider(), existingFileHelper));
         event.addProvider(new LootTableGenerator(event.getGenerator().getPackOutput(), event.getLookupProvider()));
         event.addProvider(new BlockStateGenerator(event.getGenerator().getPackOutput(), existingFileHelper));
+        event.addProvider(new RecipeGenerator(event.getGenerator().getPackOutput(), event.getLookupProvider()));
     }
 }
