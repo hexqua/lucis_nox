@@ -64,6 +64,7 @@ Get-ChildItem build\libs\*.jar
 - データ生成: `./gradlew.bat runData`。生成結果を正とし、`src/generated/resources` の差分を確認して実装と一緒に扱う。
 - 作業台レシピ: `datagen/RecipeGenerator.java` の `buildRecipes` に `ShapedRecipeBuilder` / `ShapelessRecipeBuilder` で追加し、`lucisnox` 名前空間で保存する。
 - GameTest は `run/gametest` を使う。同じ実行ディレクトリを使う Gradle / server プロセスは直列実行し、yield は終了と扱わず同じ実行の完了を追跡する。
+- `runGameTestServer` は `cleanGameTestServerWorld` により `run/gametest/world` を毎回削除してから起動する。通常の手動確認用 `run/world` は削除しない。IDE から Minecraft の実行構成を直接起動するだけでは、この Gradle の初期化処理は実行されない。
 - GameTest が一度でも失敗した場合は `.codex/skills/report-gametest-failure` を使い、後続の成功だけで初回失敗を省略しない。
 - `src/generated/resources/.cache` は Git 管理外であり、branch 切替や手動コピーで入った旧 JSON は `runData` だけでは消えない場合がある。削除・改名・移設では旧出力と build 出力側の残存も確認する。
 - IDE 実行構成の同期には `./gradlew.bat neoForgeIdeSync` を使う。共有する IDE 設定は `.idea/inspectionProfiles/Project_Default.xml` に限定し、個人の SDK パスや workspace は追跡しない。
@@ -78,6 +79,8 @@ Get-ChildItem build\libs\*.jar
 - 命名規則: クラス/インターフェースは `PascalCase`、メソッド/フィールド/ローカル変数は `camelCase`、定数は `UPPER_SNAKE_CASE` を使用する。
 - Java の型参照は import と単純クラス名を使用する。名前衝突を解消できない箇所だけ完全修飾名を使い、変更した Java ファイルの未使用 import を整理する。無関係な一括整形は行わない。
 - 不要な完全修飾名は IDEA の `UnnecessaryFullyQualifiedName` Inspection で `ERROR` として確認する。Gradle build による強制は行わない。
+- `@Deprecated(forRemoval = true)` API の利用は `checkProjectRemovalWarnings` でプロジェクトの `src/main/java` を再コンパイルしてエラーにする。通常の deprecated API はこの検査のエラー化対象に含めない。
+- `@SuppressWarnings("removal")` で廃止予定 API の警告を隠さない。`checkRemovalWarningSuppressions` で検査し、両タスクを `build` の `check` に含める。
 - 命名規則: レジストリ名・リソース ID・JSON ファイル名は `snake_case` を使用し、`lucisnox` 名前空間を前提にする。
 - 設計方針: 追加要素の登録処理は既存の `registry` パッケージ構成に合わせ、初期化時に一元登録する。
 - 設計方針: データ駆動で表現できる内容は `src/generated/resources` と datagen を優先し、ハードコードを最小化する。

@@ -46,6 +46,10 @@ sourceSets {
     }
 }
 
+// 通常の開発ワールドと分離し、削除対象と起動時のワールド名を一致させる。
+def gameTestServerWorldName = 'world'
+def gameTestServerWorldDir = layout.projectDirectory.dir("run/gametest/${gameTestServerWorldName}")
+
 neoForge {
     version = project.neo_version
     addModdingDependenciesTo sourceSets.gameTest
@@ -76,6 +80,7 @@ neoForge {
             sourceSet = sourceSets.gameTest
             gameDirectory = file('run/gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            programArguments.addAll '--world', gameTestServerWorldName
         }
 
         data {
@@ -100,6 +105,16 @@ neoForge {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+tasks.register('cleanGameTestServerWorld', Delete) {
+    group = 'verification'
+    description = 'Deletes the dedicated GameTest world before starting the server.'
+    delete gameTestServerWorldDir
+}
+
+tasks.matching { it.name.startsWith('runGameTestServer') }.configureEach {
+    dependsOn tasks.named('cleanGameTestServerWorld')
+}
 
 configurations {
     runtimeClasspath.extendsFrom localRuntime
@@ -273,4 +288,62 @@ tasks.register('checkTextEncodingHygiene') {
 
 tasks.named('check').configure {
     dependsOn tasks.named('checkTextEncodingHygiene')
+}
+
+// 依存ライブラリ全体の警告を拾わず、プロジェクト自身の廃止予定 API 利用を検査する。
+tasks.register('checkProjectRemovalWarnings', JavaCompile) {
+    group = 'verification'
+    description = 'Fails on @Deprecated(forRemoval = true) API usage in project Java sources only.'
+
+    source = sourceSets.main.java
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir('tmp/checkProjectRemovalWarnings/classes')
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-proc:none', '-Xlint:none', '-Xlint:removal', '-Werror'])
+}
+
+def removalWarningSuppressionFiles = fileTree(layout.projectDirectory.dir('src/main/java')) {
+    include '**/*.java'
+}
+def removalWarningSuppressionRootPath = layout.projectDirectory.asFile.toPath()
+
+tasks.register('checkRemovalWarningSuppressions') {
+    group = 'verification'
+    description = 'Fails when @SuppressWarnings("removal") hides forRemoval deprecation warnings.'
+
+    inputs.files(removalWarningSuppressionFiles)
+
+    doLast {
+        def failures = []
+        def suppressWarningsPattern = ~/(?s)@(?:[A-Za-z_$][\w$]*\.)*SuppressWarnings\s*\((.*?)\)/
+        def removalLiteralPattern = ~/["']removal["']/
+
+        removalWarningSuppressionFiles.files.findAll { it.isFile() }.sort { it.path }.each { file ->
+            def text = file.getText('UTF-8')
+            def matcher = suppressWarningsPattern.matcher(text)
+
+            while (matcher.find()) {
+                if (removalLiteralPattern.matcher(matcher.group(1)).find()) {
+                    def relativePath = removalWarningSuppressionRootPath.relativize(file.toPath()).toString().replace(File.separator, '/')
+                    def lineNumber = text.substring(0, matcher.start()).count('\n') + 1
+                    failures << "${relativePath}:${lineNumber} @SuppressWarnings(\"removal\") is not allowed"
+                }
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new GradleException(
+                    "@Deprecated(forRemoval = true) warnings must be fixed instead of suppressed:\n" +
+                            failures.join('\n')
+            )
+        }
+    }
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('checkProjectRemovalWarnings')
+    dependsOn tasks.named('checkRemovalWarningSuppressions')
 }

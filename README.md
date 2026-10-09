@@ -26,8 +26,10 @@ Windows の PowerShell では、`JDK21_HOME` を設定するか `%USERPROFILE%\.
 スクリプトが実行ポリシーでブロックされる場合は、現在の PowerShell だけに `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` を適用してから再実行します。組織のポリシーで変更できない場合は、[`AGENTS.md`](AGENTS.md) の手動 `JAVA_HOME` 切替を使います。
 
 - GameTest は `src/gameTest` を専用サーバーの `run/gametest` で実行します。クライアントの描画・操作は人間が `./gradlew.bat runClient` で確認します。
+- `runGameTestServer` は起動前に `run/gametest/world` を毎回削除し、初期状態から検証します。通常の開発ワールド `run/world` は保持します。IDE の直接起動ではこの初期化は行われません。
 - データ生成は `./gradlew.bat runData`、IDE 実行構成の同期は `./gradlew.bat neoForgeIdeSync` です。通常の検証では `clean` を付けません。
 - `build` には UTF-8 BOM・不正な UTF-8・明らかな文字化けの検査を含みます。単独実行は `./gradlew.bat checkTextEncodingHygiene` です。
+- `build` では `src/main/java` の廃止予定 API 利用と `@SuppressWarnings("removal")` をエラーとして検出します。単独実行は `./gradlew.bat checkProjectRemovalWarnings checkRemovalWarningSuppressions` です。
 - 共有 IDE 設定は Inspection profile のみです。個人の SDK パス・実行構成・workspace は共有しません。
 - 開発・レビュー・スキルの使い分けは [`AGENTS.md`](AGENTS.md)、PR CI と GitHub 保護設定の導入は [`docs/github-pr-protection.md`](docs/github-pr-protection.md) を参照してください。
 - 今回の運用基盤の採用範囲と見送り理由は [`docs/development-workflow-adoption.md`](docs/development-workflow-adoption.md) に記録しています。
