@@ -97,11 +97,17 @@ Write-Host "JAVA_HOME switched to JDK ${Version}: $javaHome"
 Write-Host "Detected from: $($selectedJdk.Source)"
 
 & (Join-Path $javaBin 'java.exe') -version
+if ($LASTEXITCODE -ne 0) {
+    throw "java -version failed with exit code $LASTEXITCODE."
+}
 
 if ($StopGradleDaemons -and (Test-Path (Join-Path $repoRoot 'gradlew.bat'))) {
     Push-Location $repoRoot
     try {
         & .\gradlew.bat --stop | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Gradle --stop failed with exit code $LASTEXITCODE."
+        }
     } finally {
         Pop-Location
     }
@@ -111,6 +117,9 @@ if (-not $SkipGradleCheck -and (Test-Path (Join-Path $repoRoot 'gradlew.bat'))) 
     Push-Location $repoRoot
     try {
         & .\gradlew.bat --version
+        if ($LASTEXITCODE -ne 0) {
+            throw "Gradle --version failed with exit code $LASTEXITCODE."
+        }
     } finally {
         Pop-Location
     }
