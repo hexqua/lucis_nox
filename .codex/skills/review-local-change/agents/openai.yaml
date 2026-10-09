@@ -1,0 +1,4 @@
+interface:
+  display_name: "ローカル変更レビュー"
+  short_description: "コミット前の未コミット差分を読み取り専用でレビューする"
+  default_prompt: "$review-local-change を使い、現在の未コミット差分を変更せずにレビューしてください。"

@@ -1,0 +1,143 @@
+name: Bug report
+description: Report a crash, bug, or unexpected behavior.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a Lucis Nox bug.
+
+        Please do not paste the entire log directly into the issue body.
+        Attach `latest.log` or the crash report file instead whenever possible.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before reporting
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+        - label: I am using the latest available version of this mod for my Minecraft version.
+          required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      options:
+        - Crash
+        - Gameplay bug
+        - Compatibility issue with another mod
+        - Datapack / config issue
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: minecraft-version
+    attributes:
+      label: Minecraft version
+      options:
+        - "1.20.1"
+        - "1.21.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where does this happen?
+      options:
+        - Client startup
+        - Singleplayer
+        - Multiplayer client
+        - Dedicated server
+        - Both client and server
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: Lucis Nox version
+      placeholder: "Example: 0.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: forge-version
+    attributes:
+      label: Forge / NeoForge version
+      placeholder: "Example: NeoForge 21.1.219"
+    validations:
+      required: true
+
+  - type: input
+    id: dependency-version
+    attributes:
+      label: Required dependency versions
+      description: If you are not sure, write "Not sure" and attach the log file below.
+      placeholder: "Example: GeckoLib x.x.x, Patchouli x.x.x, Curios x.x.x"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the crash, bug, or unexpected behavior.
+      placeholder: "Example: The game crashes when casting X spell with Y item equipped."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Please write the steps as specifically as possible.
+      placeholder: |
+        1. Install ...
+        2. Equip ...
+        3. Cast ...
+        4. Crash / bug occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "What did you expect to happen instead?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility information, if relevant
+      description: If this happens only with another mod, write the mod name, version, and what interaction causes the issue.
+      placeholder: |
+        Other mod:
+        Other mod version:
+        Does it happen without that mod?:
+        Interaction involved:
+    validations:
+      required: false
+
+  - type: upload
+    id: logs
+    attributes:
+      label: Log files
+      description: Please attach `latest.log`, `debug.log`, crash reports, or a zipped log file. Do not paste a huge log directly into the issue body.
+    validations:
+      required: true
+      accept: ".log,.txt,.zip,.gz"
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Screenshots, modpack name, server/client-only issue, or anything else that may help.
+    validations:
+      required: false

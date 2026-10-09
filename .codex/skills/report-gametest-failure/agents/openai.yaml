@@ -1,0 +1,4 @@
+interface:
+  display_name: "GameTest失敗報告"
+  short_description: "初回失敗と追加実行を保持しGameTestの不安定要因を報告"
+  default_prompt: "$report-gametest-failure を使い、観測したGameTest失敗と追加実行の証拠を変更せずに報告してください。"

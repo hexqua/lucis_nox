@@ -1,0 +1,4 @@
+interface:
+  display_name: "機能ブランチレビュー"
+  short_description: "baseとの差分とPR状況から機能全体のreadinessを確認"
+  default_prompt: "$review-feature-branch を使い、base branchとの差分とPR状況から機能全体のreadinessをレビューしてください。"

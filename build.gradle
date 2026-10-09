@@ -1,3 +1,16 @@
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
+import com.sun.source.tree.AnnotationTree
+import com.sun.source.tree.LiteralTree
+import com.sun.source.util.JavacTask
+import com.sun.source.util.TreeScanner
+import com.sun.source.util.Trees
+import javax.tools.Diagnostic
+import javax.tools.DiagnosticCollector
+import javax.tools.ToolProvider
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -41,6 +54,10 @@ sourceSets {
     }
 }
 
+// 通常の開発ワールドと分離し、削除対象と起動時のワールド名を一致させる。
+def gameTestServerWorldName = 'world'
+def gameTestServerWorldDir = layout.projectDirectory.dir("run/gametest/${gameTestServerWorldName}")
+
 neoForge {
     version = project.neo_version
     addModdingDependenciesTo sourceSets.gameTest
@@ -71,6 +88,7 @@ neoForge {
             sourceSet = sourceSets.gameTest
             gameDirectory = file('run/gametest')
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            programArguments.addAll '--world', gameTestServerWorldName
         }
 
         data {
@@ -95,6 +113,16 @@ neoForge {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+tasks.register('cleanGameTestServerWorld', Delete) {
+    group = 'verification'
+    description = 'Deletes the dedicated GameTest world before starting the server.'
+    delete gameTestServerWorldDir
+}
+
+tasks.matching { it.name.startsWith('runGameTestServer') }.configureEach {
+    dependsOn tasks.named('cleanGameTestServerWorld')
+}
 
 configurations {
     runtimeClasspath.extendsFrom localRuntime
@@ -157,4 +185,205 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+def textEncodingHygieneIncludes = [
+        '**/*.cfg',
+        '**/*.gradle',
+        '**/*.java',
+        '**/*.json',
+        '**/*.mcmeta',
+        '**/*.md',
+        '**/*.properties',
+        '**/*.ps1',
+        '**/*.toml',
+        '**/*.txt',
+        '**/*.yaml',
+        '**/*.yml',
+]
+
+def textEncodingHygieneExcludes = [
+        '.git/**',
+        '.gradle/**',
+        '.idea/**',
+        'build/**',
+        'bin/**',
+        'out/**',
+        'run/**',
+        'run-data/**',
+        'runs/**',
+        'repo/**',
+        '.cache/**',
+        '.tmp*/**',
+        'tmp/**',
+]
+
+def textEncodingMojibakeHeuristicSkips = [] as Set
+
+def textEncodingHygieneRootDir = layout.projectDirectory.asFile
+def textEncodingHygieneRootPath = textEncodingHygieneRootDir.toPath()
+def textEncodingHygieneFiles = fileTree(textEncodingHygieneRootDir) {
+    include textEncodingHygieneIncludes
+    exclude textEncodingHygieneExcludes
+}
+
+tasks.register('checkTextEncodingHygiene') {
+    group = 'verification'
+    description = 'Fails on UTF-8 BOMs or obvious mojibake in repository text files.'
+
+    inputs.files(textEncodingHygieneFiles)
+
+    doLast {
+        def failures = []
+        // 種類数ではなく出現回数を数え、同じ断片の反復も判定に含める。
+        def suspiciousFragments = ~/[\u7E3A\u7E67\u7E5D\u8B41\u8B4C\u873F\u8B5B]/
+        def halfwidthKatakana = ~/.*[\uFF66-\uFF9F].*/
+        // 単独の漢字では判定せず、UTF-8 を CP932 で誤読した既知の連続文字列だけを検出する。
+        // 検査定義自身を誤検出しないよう、誤変換後の文字列は Unicode エスケープで記述する。
+        def cp932MojibakeSequences = [
+                '\u879F\u753B\u5CE9', // 変更
+                '\u9AE2\u72D7\u5331', // 開発
+                '\u8711\u4F01\u52C1', // 削除
+                '\u8B0C\u4ED9\u7CA5', // 成功
+        ]
+        def isLikelyMojibake = { String line ->
+            def fragmentHitCount = (line =~ suspiciousFragments).size()
+            return cp932MojibakeSequences.any { sequence -> line.contains(sequence) }
+                    || fragmentHitCount >= 2
+                    || (fragmentHitCount >= 1 && line ==~ halfwidthKatakana)
+        }
+
+        textEncodingHygieneFiles.files.findAll { it.isFile() }.sort { it.path }.each { file ->
+            byte[] bytes = file.bytes
+            String relativePath = textEncodingHygieneRootPath.relativize(file.toPath()).toString().replace(File.separator, '/')
+
+            if (bytes.length >= 3
+                    && (bytes[0] & 0xFF) == 0xEF
+                    && (bytes[1] & 0xFF) == 0xBB
+                    && (bytes[2] & 0xFF) == 0xBF) {
+                failures << "${relativePath}:1 UTF-8 BOM is not allowed"
+            }
+
+            def decoder = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+            String text
+            try {
+                text = decoder.decode(ByteBuffer.wrap(bytes)).toString()
+            } catch (CharacterCodingException ignored) {
+                failures << "${relativePath}:1 invalid UTF-8 byte sequence"
+                return
+            }
+
+            text.readLines().eachWithIndex { line, index ->
+                boolean skipMojibakeHeuristic = textEncodingMojibakeHeuristicSkips.contains(relativePath)
+                boolean hasReplacementCharacter = line.indexOf('\uFFFD') >= 0
+                boolean hasLikelyMojibake = !skipMojibakeHeuristic && isLikelyMojibake(line)
+
+                if (hasReplacementCharacter || hasLikelyMojibake) {
+                    String excerpt = line.trim()
+                    if (excerpt.length() > 120) {
+                        excerpt = excerpt.substring(0, 120) + '...'
+                    }
+                    failures << "${relativePath}:${index + 1} possible mojibake: ${excerpt}"
+                }
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            def shownFailures = failures.take(50).join(System.lineSeparator())
+            def omittedCount = failures.size() - Math.min(failures.size(), 50)
+            def omittedMessage = omittedCount > 0 ? "${System.lineSeparator()}... and ${omittedCount} more" : ''
+            throw new GradleException("Text encoding hygiene check failed:${System.lineSeparator()}${shownFailures}${omittedMessage}")
+        }
+    }
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('checkTextEncodingHygiene')
+}
+
+// 依存ライブラリ全体の警告を拾わず、プロジェクト自身の廃止予定 API 利用を検査する。
+tasks.register('checkProjectRemovalWarnings', JavaCompile) {
+    group = 'verification'
+    description = 'Fails on @Deprecated(forRemoval = true) API usage in project Java sources only.'
+
+    source = sourceSets.main.java
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir('tmp/checkProjectRemovalWarnings/classes')
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-proc:none', '-Xlint:none', '-Xlint:removal', '-Werror'])
+}
+
+def removalWarningSuppressionFiles = fileTree(layout.projectDirectory.dir('src/main/java')) {
+    include '**/*.java'
+}
+def removalWarningSuppressionRootPath = layout.projectDirectory.asFile.toPath()
+
+tasks.register('checkRemovalWarningSuppressions') {
+    group = 'verification'
+    description = 'Fails when @SuppressWarnings("removal") hides forRemoval deprecation warnings.'
+
+    inputs.files(removalWarningSuppressionFiles)
+
+    doLast {
+        def failures = []
+        def compiler = ToolProvider.systemJavaCompiler
+        if (compiler == null) {
+            throw new GradleException('A JDK is required to check removal warning suppressions.')
+        }
+        def diagnostics = new DiagnosticCollector()
+        def fileManager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)
+        try {
+            def sources = fileManager.getJavaFileObjectsFromFiles(removalWarningSuppressionFiles.files.sort { it.path })
+            JavacTask parser = (JavacTask) compiler.getTask(null, fileManager, diagnostics, ['-proc:none'], null, sources)
+            def positions = Trees.instance(parser).sourcePositions
+            // parse のみを使い、依存クラスの解決やコンパイルなしでコメント・文字列の例示を除外する。
+            parser.parse().each { unit ->
+                def sourcePath = new File(unit.sourceFile.toUri()).toPath()
+                def relativePath = removalWarningSuppressionRootPath.relativize(sourcePath).toString().replace(File.separator, '/')
+                new TreeScanner<Void, Void>() {
+                    @Override
+                    Void visitAnnotation(AnnotationTree annotation, Void unused) {
+                        def annotationName = annotation.annotationType.toString()
+                        if (annotationName == 'SuppressWarnings' || annotationName == 'java.lang.SuppressWarnings') {
+                            new TreeScanner<Void, Void>() {
+                                @Override
+                                Void visitLiteral(LiteralTree literal, Void ignored) {
+                                    if (literal.value == 'removal') {
+                                        def lineNumber = unit.lineMap.getLineNumber(positions.getStartPosition(unit, annotation))
+                                        failures << "${relativePath}:${lineNumber} @SuppressWarnings(\"removal\") is not allowed"
+                                    }
+                                    return null
+                                }
+                            }.scan(annotation.arguments, null)
+                        }
+                        super.visitAnnotation(annotation, unused)
+                        return null
+                    }
+                }.scan(unit, null)
+            }
+            if (diagnostics.diagnostics.any { it.kind == Diagnostic.Kind.ERROR }) {
+                throw new GradleException('Java syntax errors prevented checking removal warning suppressions:\n' +
+                        diagnostics.diagnostics.join('\n'))
+            }
+        } finally {
+            fileManager.close()
+        }
+
+        if (!failures.isEmpty()) {
+            throw new GradleException(
+                    "@Deprecated(forRemoval = true) warnings must be fixed instead of suppressed:\n" +
+                            failures.join('\n')
+            )
+        }
+    }
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('checkProjectRemovalWarnings')
+    dependsOn tasks.named('checkRemovalWarningSuppressions')
 }

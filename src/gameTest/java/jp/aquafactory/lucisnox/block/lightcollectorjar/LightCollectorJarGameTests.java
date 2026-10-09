@@ -20,16 +20,16 @@ public final class LightCollectorJarGameTests {
         encloseJar(helper);
         helper.runAtTickTime(40L, () -> {
             var jar = resetJar(helper, 0);
-            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "能動生成を開始できない");
-            helper.runAfterDelay(1181L, () -> helper.assertValueEqual(jar.getStoredLicht(), 1770, "終了直前のリヒト"));
+            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Failed to start active generation");
+            helper.runAfterDelay(1181L, () -> helper.assertValueEqual(jar.getStoredLicht(), 1770, "Stored Licht just before expiration"));
             helper.runAfterDelay(1201L, () -> {
-                helper.assertValueEqual(jar.getStoredLicht(), 1800, "60秒分のリヒト");
-                helper.assertFalse(jar.isActiveGeneration(), "期限後も能動生成が続いている");
-                helper.assertValueEqual(jar.getActiveGenerationUntilGameTime(), 0L, "期限の解除");
+                helper.assertValueEqual(jar.getStoredLicht(), 1800, "Stored Licht after 60 seconds");
+                helper.assertFalse(jar.isActiveGeneration(), "Active generation continued after expiration");
+                helper.assertValueEqual(jar.getActiveGenerationUntilGameTime(), 0L, "Cleared active generation deadline");
             });
             helper.runAfterDelay(1221L, () -> {
-                helper.assertValueEqual(jar.getStoredLicht(), 1800, "暗所で終了後のリヒト");
-                helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "終了後に再投入できない");
+                helper.assertValueEqual(jar.getStoredLicht(), 1800, "Stored Licht after expiration in darkness");
+                helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Failed to restart active generation after expiration");
                 helper.succeed();
             });
         });
@@ -41,10 +41,10 @@ public final class LightCollectorJarGameTests {
         helper.runAtTickTime(40L, () -> {
             var jar = resetJar(helper, 0);
             helper.runAfterDelay(7L, () ->
-                    helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "周期途中で開始できない"));
+                    helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Failed to start active generation between collection intervals"));
             helper.runAfterDelay(1221L, () -> {
-                helper.assertValueEqual(jar.getStoredLicht(), 1800, "周期途中で投入した場合のリヒト");
-                helper.assertFalse(jar.isActiveGeneration(), "周期途中で投入した能動生成が終了していない");
+                helper.assertValueEqual(jar.getStoredLicht(), 1800, "Stored Licht when active generation starts between collection intervals");
+                helper.assertFalse(jar.isActiveGeneration(), "Active generation started between collection intervals did not expire");
                 helper.succeed();
             });
         });
@@ -58,11 +58,11 @@ public final class LightCollectorJarGameTests {
             var jar = new LightCollectorJarBlockEntity(helper.absolutePos(JAR_POS), helper.getBlockState(JAR_POS));
             jar.setLevel(helper.getLevel());
             jar.onLoad();
-            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "能動生成を開始できない");
+            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Failed to start active generation");
             helper.runAfterDelay(1240L, () -> {
                 LightCollectorJarBlockEntity.serverTick(helper.getLevel(), jar.getBlockPos(), jar.getBlockState(), jar);
-                helper.assertValueEqual(jar.getStoredLicht(), 1800, "期限をまたいで集計したリヒト");
-                helper.assertFalse(jar.isActiveGeneration(), "集計後に期限が解除されていない");
+                helper.assertValueEqual(jar.getStoredLicht(), 1800, "Stored Licht collected across the active generation deadline");
+                helper.assertFalse(jar.isActiveGeneration(), "Active generation deadline was not cleared after collection");
                 helper.succeed();
             });
         });
@@ -73,12 +73,12 @@ public final class LightCollectorJarGameTests {
         encloseJar(helper);
         helper.runAtTickTime(40L, () -> {
             var jar = resetJar(helper, 19995);
-            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "満杯直前に開始できない");
-            helper.runAfterDelay(21L, () -> helper.assertValueEqual(jar.getStoredLicht(), 20000, "容量上限"));
+            helper.assertTrue(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Failed to start active generation with nearly full storage");
+            helper.runAfterDelay(21L, () -> helper.assertValueEqual(jar.getStoredLicht(), 20000, "Storage capacity"));
             helper.runAfterDelay(1201L, () -> {
-                helper.assertValueEqual(jar.getStoredLicht(), 20000, "満杯後のリヒト");
-                helper.assertFalse(jar.isActiveGeneration(), "満杯時に期限が解除されていない");
-                helper.assertFalse(jar.startActiveGeneration(helper.getLevel().getGameTime()), "満杯でも投入できてしまう");
+                helper.assertValueEqual(jar.getStoredLicht(), 20000, "Stored Licht after reaching capacity");
+                helper.assertFalse(jar.isActiveGeneration(), "Active generation deadline was not cleared at full capacity");
+                helper.assertFalse(jar.startActiveGeneration(helper.getLevel().getGameTime()), "Active generation started despite full storage");
                 helper.succeed();
             });
         });

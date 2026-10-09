@@ -1,0 +1,4 @@
+interface:
+  display_name: "クライアント／サーバー権威レビュー"
+  short_description: "不正なclient入力とserver側制約を重大性に基づきレビュー"
+  default_prompt: "$review-client-server-authority を使い、client由来の入力とserver側の権威境界をレビューしてください。"
