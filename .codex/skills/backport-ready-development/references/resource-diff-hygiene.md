@@ -17,4 +17,4 @@
 
 - Backport対象となるresourceと、1.20.1側で再生成または再記述するresourceを分ける。
 - 削除・改名された旧pathと、stale出力の確認範囲を示す。
-- 実際の1.20.1 datagenやcleanupは開始せず、`backport-1-20-1-forge`へ引き継ぐ。
+- この準備作業では1.20.1 datagenやcleanupを開始せず、対象resource、旧path、stale出力の確認範囲を1.20.1側の作業へ引き継ぐ。実作業では`1.20.1-main`から分岐した作業ブランチの`.codex/skills/backport-1-20-1-forge`を使用する。

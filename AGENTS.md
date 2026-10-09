@@ -146,7 +146,7 @@ Get-ChildItem build\libs\*.jar
 - 基本方針: `main`（1.21.1 / NeoForge）を主系統とし、`1.20.1-main`（1.20.1 / Forge）への反映は backport で行う。
 - 基本方針: `main` と `1.20.1-main` の直接 `merge` は原則禁止とし、必要な場合は事前合意を必須とする。
 - 基本方針: `merge` コミットの直接 `cherry-pick`（`git cherry-pick -m` を含む）と、擬似的なスカッシュコミットの backport は禁止とし、取り込み対象は個別コミット単位で扱う。
-- 実作業では `.codex/skills/backport-1-20-1-forge` を使用する。
+- `main` 側では `.codex/skills/backport-ready-development` により移植候補と差分境界を整理する。実際の backport は `1.20.1-main` から分岐した作業ブランチで行い、そのブランチの `AGENTS.md` と `.codex/skills/backport-1-20-1-forge` を使用する。実作業用スキルは 1.20.1 側で管理する。
 - AGENTS.md では次の原則だけを常設ルールとして保持する。
 1. 取り込み前に対象コミットを個別 SHA で確定し、`git cherry-pick -x` を使う。
 2. 1 機能を独立した連続コミット系列として保ち、無関係な整形・rename・広域整理を同じ backport 対象に混ぜない。
