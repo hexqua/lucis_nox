@@ -22,9 +22,11 @@
 - NeoForge 固有 API をそのまま Forge 側へ寄せるのではなく、1.20.1 Forge 側の正しい実装へ置き換える。
 - `main` 側で成立しているだけの補助コードを、1.20.1 側へ不要に持ち込まない。
 
+1.20.1 の data パスは recipes、loot_tables、advancements、tags/blocks、structures。Biome modifier は forge/biome_modifier と forge:add_features。Data Components を使う保存処理は BlockEntityTag NBT へ適合する。
+
 ## 最低限の検証
 
-- `./gradlew.bat build` が通ること
+- Java 17 で `./gradlew.bat build` と `./gradlew.bat runGameTestServer` が通ること
 - 登録漏れがないこと
 - client 専用参照が server 前提コードへ混ざっていないこと
 - data/resource の path や namespace に旧残骸がないこと

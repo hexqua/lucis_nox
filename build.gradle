@@ -14,7 +14,8 @@ import javax.tools.ToolProvider
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.140'
+    id 'net.minecraftforge.gradle' version '6.0.54'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.2.0.7-dev-SNAPSHOT'
     id 'idea'
 }
 
@@ -44,13 +45,13 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 21 to end users in 1.21.1, so mods should target Java 21.
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+// Forge 1.20.1 の配布・開発環境に合わせ、Gradle JVM と compiler を Java 17 にそろえる。
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 sourceSets {
     gameTest {
-        compileClasspath += sourceSets.main.output
-        runtimeClasspath += sourceSets.main.output
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
 
@@ -58,56 +59,47 @@ sourceSets {
 def gameTestServerWorldName = 'world'
 def gameTestServerWorldDir = layout.projectDirectory.dir("run/gametest/${gameTestServerWorldName}")
 
-neoForge {
-    version = project.neo_version
-    addModdingDependenciesTo sourceSets.gameTest
-
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
 
     runs {
-        client {
-            client()
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            // Curios の配布用 refmap を ForgeGradle の開発名へ変換する（Curios の開発環境設定）。
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', layout.buildDirectory.file('createSrgToMcp/output.srg').get().asFile.absolutePath
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
 
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        client {
         }
 
         server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            args '--nogui'
         }
 
         gameTestServer {
-            type = "gameTestServer"
-            sourceSet = sourceSets.gameTest
-            gameDirectory = file('run/gametest')
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-            programArguments.addAll '--world', gameTestServerWorldName
+            workingDirectory project.file('run/gametest')
+            property 'forge.enabledGameTestNamespaces', project.mod_id
+            args '--world', gameTestServerWorldName
+            mods {
+                "${mod_id}" {
+                    // GameTest は専用の開発実行だけで読み込み、配布 jar には含めない。
+                    source sourceSets.gameTest
+                }
+            }
         }
 
         data {
-            data()
-
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-            // GameTest は開発実行だけで読み込み、配布 jar には含めない。
-            sourceSet(sourceSets.gameTest)
+            workingDirectory project.file('run-data')
+            args '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
     }
 }
@@ -125,22 +117,22 @@ tasks.matching { it.name.startsWith('runGameTestServer') }.configureEach {
 }
 
 configurations {
-    runtimeClasspath.extendsFrom localRuntime
     gameTestImplementation.extendsFrom implementation
     gameTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
 dependencies {
-    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:${geckolib_version}"
-    implementation "vazkii.patchouli:Patchouli:${patchouli_version}"
-    implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}"
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
+    implementation fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}")
+    implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}+${minecraft_version}")
 }
 
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
+            forge_version          : forge_version,
             loader_version_range   : loader_version_range,
             geckolib_version       : geckolib_version,
             patchouli_version      : patchouli_version,
@@ -155,12 +147,17 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     ]
     inputs.properties replaceProperties
     expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
 }
 
 sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata
+
+// Forge の配布 jar は実行環境の名前へ再難読化する必要がある。
+tasks.named('jar').configure {
+    archiveVersion.set("${project.mod_version}+mc${project.minecraft_version}")
+    finalizedBy 'reobfJar'
+}
 
 publishing {
     publications {
@@ -312,7 +309,7 @@ tasks.register('checkProjectRemovalWarnings', JavaCompile) {
     classpath = sourceSets.main.compileClasspath
     destinationDirectory = layout.buildDirectory.dir('tmp/checkProjectRemovalWarnings/classes')
     javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(17)
     }
     options.encoding = 'UTF-8'
     options.compilerArgs.addAll(['-proc:none', '-Xlint:none', '-Xlint:removal', '-Werror'])

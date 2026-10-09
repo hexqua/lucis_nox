@@ -21,7 +21,7 @@ description: "コミット前のローカル変更を読み取り専用でレビ
    - 呼び出し元、登録処理、resource、設定、保存データ、server/client境界まで必要な範囲を追う。
    - 詳細な観点は[レビュー観点](references/review-criteria.md)を読む。
 4. 条件付きの専門観点を適用する。
-   - mainからのbackport候補では`backport-ready-development`の観点も適用する。
+   - backport の差分はこのブランチの `backport-1-20-1-forge` の観点で Forge / Java 17 / resource と移植元の意図を確認する。
    - clientから受け取った座標、対象、slot、modeなどでserver側の状態を変更する差分では`review-client-server-authority`を使用する。
    - 日本語・中国語や文字化けが疑われる差分では`text-encoding-hygiene`を使用する。
 5. 検証状況を確認する。

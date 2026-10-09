@@ -18,7 +18,7 @@
     "GGG"
   ],
   "result": {
-    "count": 1,
-    "id": "lucisnox:light_collector_jar"
-  }
+    "item": "lucisnox:light_collector_jar"
+  },
+  "show_notification": true
 }

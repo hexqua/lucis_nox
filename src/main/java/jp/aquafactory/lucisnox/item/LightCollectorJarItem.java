@@ -2,15 +2,15 @@ package jp.aquafactory.lucisnox.item;
 
 import jp.aquafactory.lucisnox.block.lightcollectorjar.LightCollectorJarBlockEntity;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -43,9 +43,9 @@ public final class LightCollectorJarItem extends BlockItem {
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack stack, Item.@NotNull TooltipContext context,
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level,
                                 @NotNull List<Component> tooltipComponents, @NotNull TooltipFlag tooltipFlag) {
-        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        super.appendHoverText(stack, level, tooltipComponents, tooltipFlag);
         tooltipComponents.add(Component.translatable(
                 "tooltip.lucisnox.light_collector_jar.licht",
                 getStoredLicht(stack),
@@ -54,11 +54,11 @@ public final class LightCollectorJarItem extends BlockItem {
     }
 
     public static int getStoredLicht(ItemStack stack) {
-        var customData = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
-        if (customData.isEmpty()) {
+        var tag = BlockItem.getBlockEntityData(stack);
+        if (tag == null) {
             return 0;
         }
 
-        return Mth.clamp(customData.copyTag().getInt(LightCollectorJarBlockEntity.STORED_LICHT_TAG), 0, LightCollectorJarBlockEntity.MAX_LICHT);
+        return Mth.clamp(tag.getInt(LightCollectorJarBlockEntity.STORED_LICHT_TAG), 0, LightCollectorJarBlockEntity.MAX_LICHT);
     }
 }

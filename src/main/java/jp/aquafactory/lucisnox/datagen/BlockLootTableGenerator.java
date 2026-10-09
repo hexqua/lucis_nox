@@ -4,8 +4,6 @@ import jp.aquafactory.lucisnox.registry.BlockRegistry;
 import jp.aquafactory.lucisnox.registry.ItemRegistry;
 import java.util.List;
 import java.util.Set;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
@@ -18,8 +16,8 @@ import net.minecraft.data.loot.BlockLootSubProvider;
 import org.jetbrains.annotations.NotNull;
 
 public final class BlockLootTableGenerator extends BlockLootSubProvider {
-    public BlockLootTableGenerator(HolderLookup.Provider registries) {
-        super(Set.of(), FeatureFlags.REGISTRY.allFlags(), registries);
+    public BlockLootTableGenerator() {
+        super(Set.of(), FeatureFlags.REGISTRY.allFlags());
     }
 
     @Override
@@ -30,12 +28,10 @@ public final class BlockLootTableGenerator extends BlockLootSubProvider {
     }
 
     private LootTable.Builder oreDrop(Block block) {
-        var fortune = this.registries.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE);
-
         return createSilkTouchDispatchTable(block, applyExplosionDecay(ItemRegistry.PHOSSHARD.get(),
                 LootItem.lootTableItem(ItemRegistry.PHOSSHARD.get())
                         .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F)))
-                        .apply(ApplyBonusCount.addUniformBonusCount(fortune))
+                        .apply(ApplyBonusCount.addUniformBonusCount(Enchantments.BLOCK_FORTUNE))
         ));
     }
 

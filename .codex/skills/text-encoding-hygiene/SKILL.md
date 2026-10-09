@@ -48,7 +48,7 @@ $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 - For code, resource, dependency, or datagen changes, run:
 
 ```powershell
-.\scripts\use-java.ps1
+.\scripts\use-java.ps1 -Version 17
 ./gradlew.bat build
 ```
 
