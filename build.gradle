@@ -2,6 +2,14 @@ import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 import java.nio.charset.StandardCharsets
+import com.sun.source.tree.AnnotationTree
+import com.sun.source.tree.LiteralTree
+import com.sun.source.util.JavacTask
+import com.sun.source.util.TreeScanner
+import com.sun.source.util.Trees
+import javax.tools.Diagnostic
+import javax.tools.DiagnosticCollector
+import javax.tools.ToolProvider
 
 plugins {
     id 'java-library'
@@ -318,20 +326,47 @@ tasks.register('checkRemovalWarningSuppressions') {
 
     doLast {
         def failures = []
-        def suppressWarningsPattern = ~/(?s)@(?:[A-Za-z_$][\w$]*\.)*SuppressWarnings\s*\((.*?)\)/
-        def removalLiteralPattern = ~/["']removal["']/
-
-        removalWarningSuppressionFiles.files.findAll { it.isFile() }.sort { it.path }.each { file ->
-            def text = file.getText('UTF-8')
-            def matcher = suppressWarningsPattern.matcher(text)
-
-            while (matcher.find()) {
-                if (removalLiteralPattern.matcher(matcher.group(1)).find()) {
-                    def relativePath = removalWarningSuppressionRootPath.relativize(file.toPath()).toString().replace(File.separator, '/')
-                    def lineNumber = text.substring(0, matcher.start()).count('\n') + 1
-                    failures << "${relativePath}:${lineNumber} @SuppressWarnings(\"removal\") is not allowed"
-                }
+        def compiler = ToolProvider.systemJavaCompiler
+        if (compiler == null) {
+            throw new GradleException('A JDK is required to check removal warning suppressions.')
+        }
+        def diagnostics = new DiagnosticCollector()
+        def fileManager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)
+        try {
+            def sources = fileManager.getJavaFileObjectsFromFiles(removalWarningSuppressionFiles.files.sort { it.path })
+            JavacTask parser = (JavacTask) compiler.getTask(null, fileManager, diagnostics, ['-proc:none'], null, sources)
+            def positions = Trees.instance(parser).sourcePositions
+            // parse のみを使い、依存クラスの解決やコンパイルなしでコメント・文字列の例示を除外する。
+            parser.parse().each { unit ->
+                def sourcePath = new File(unit.sourceFile.toUri()).toPath()
+                def relativePath = removalWarningSuppressionRootPath.relativize(sourcePath).toString().replace(File.separator, '/')
+                new TreeScanner<Void, Void>() {
+                    @Override
+                    Void visitAnnotation(AnnotationTree annotation, Void unused) {
+                        def annotationName = annotation.annotationType.toString()
+                        if (annotationName == 'SuppressWarnings' || annotationName == 'java.lang.SuppressWarnings') {
+                            new TreeScanner<Void, Void>() {
+                                @Override
+                                Void visitLiteral(LiteralTree literal, Void ignored) {
+                                    if (literal.value == 'removal') {
+                                        def lineNumber = unit.lineMap.getLineNumber(positions.getStartPosition(unit, annotation))
+                                        failures << "${relativePath}:${lineNumber} @SuppressWarnings(\"removal\") is not allowed"
+                                    }
+                                    return null
+                                }
+                            }.scan(annotation.arguments, null)
+                        }
+                        super.visitAnnotation(annotation, unused)
+                        return null
+                    }
+                }.scan(unit, null)
             }
+            if (diagnostics.diagnostics.any { it.kind == Diagnostic.Kind.ERROR }) {
+                throw new GradleException('Java syntax errors prevented checking removal warning suppressions:\n' +
+                        diagnostics.diagnostics.join('\n'))
+            }
+        } finally {
+            fileManager.close()
         }
 
         if (!failures.isEmpty()) {
