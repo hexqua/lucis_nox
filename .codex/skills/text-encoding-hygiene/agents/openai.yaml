@@ -1,0 +1,4 @@
+interface:
+  display_name: "Text Encoding Hygiene"
+  short_description: "Prevent and diagnose UTF-8 mojibake in repository files."
+  default_prompt: "Use $text-encoding-hygiene when repository text appears mojibake, when editing Japanese UTF-8 files from PowerShell, or when validating encoding hygiene before committing."

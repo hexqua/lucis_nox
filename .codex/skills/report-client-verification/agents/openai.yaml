@@ -1,0 +1,4 @@
+interface:
+  display_name: "クライアント確認の引き継ぎ"
+  short_description: "変更に応じたクライアントの手動確認シナリオと未確認事項を報告"
+  default_prompt: "$report-client-verification を使い、今回の変更で人間が確認するクライアントのシナリオと確認状態を報告してください。"

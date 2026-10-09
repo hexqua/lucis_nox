@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backport対応開発"
+  short_description: "mainの変更を1.20.1へ移しやすい設計と差分に保つ"
+  default_prompt: "$backport-ready-development を使い、mainの変更を1.20.1へbackportしやすい設計とコミット構成で計画またはレビューしてください。"

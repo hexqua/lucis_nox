@@ -1,3 +1,8 @@
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
+
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -157,4 +162,115 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+}
+
+def textEncodingHygieneIncludes = [
+        '**/*.cfg',
+        '**/*.gradle',
+        '**/*.java',
+        '**/*.json',
+        '**/*.mcmeta',
+        '**/*.md',
+        '**/*.properties',
+        '**/*.ps1',
+        '**/*.toml',
+        '**/*.txt',
+        '**/*.yaml',
+        '**/*.yml',
+]
+
+def textEncodingHygieneExcludes = [
+        '.git/**',
+        '.gradle/**',
+        '.idea/**',
+        'build/**',
+        'bin/**',
+        'out/**',
+        'run/**',
+        'run-data/**',
+        'runs/**',
+        'repo/**',
+        '.cache/**',
+        '.tmp*/**',
+        'tmp/**',
+]
+
+def textEncodingMojibakeHeuristicSkips = [] as Set
+
+def textEncodingHygieneRootDir = layout.projectDirectory.asFile
+def textEncodingHygieneRootPath = textEncodingHygieneRootDir.toPath()
+def textEncodingHygieneFiles = fileTree(textEncodingHygieneRootDir) {
+    include textEncodingHygieneIncludes
+    exclude textEncodingHygieneExcludes
+}
+
+tasks.register('checkTextEncodingHygiene') {
+    group = 'verification'
+    description = 'Fails on UTF-8 BOMs or obvious mojibake in repository text files.'
+
+    inputs.files(textEncodingHygieneFiles)
+
+    doLast {
+        def failures = []
+        def suspiciousFragments = [
+                '\u7E3A',
+                '\u7E67',
+                '\u7E5D',
+                '\u8B41',
+                '\u8B4C',
+                '\u873F',
+                '\u8B5B',
+        ]
+        def halfwidthKatakana = ~/.*[\uFF66-\uFF9F].*/
+
+        textEncodingHygieneFiles.files.findAll { it.isFile() }.sort { it.path }.each { file ->
+            byte[] bytes = file.bytes
+            String relativePath = textEncodingHygieneRootPath.relativize(file.toPath()).toString().replace(File.separator, '/')
+
+            if (bytes.length >= 3
+                    && (bytes[0] & 0xFF) == 0xEF
+                    && (bytes[1] & 0xFF) == 0xBB
+                    && (bytes[2] & 0xFF) == 0xBF) {
+                failures << "${relativePath}:1 UTF-8 BOM is not allowed"
+            }
+
+            def decoder = StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+            String text
+            try {
+                text = decoder.decode(ByteBuffer.wrap(bytes)).toString()
+            } catch (CharacterCodingException ignored) {
+                failures << "${relativePath}:1 invalid UTF-8 byte sequence"
+                return
+            }
+
+            text.readLines().eachWithIndex { line, index ->
+                boolean skipMojibakeHeuristic = textEncodingMojibakeHeuristicSkips.contains(relativePath)
+                boolean hasReplacementCharacter = line.indexOf('\uFFFD') >= 0
+                def fragmentHitCount = suspiciousFragments.count { fragment -> line.contains(fragment) }
+                boolean hasLikelyMojibake = !skipMojibakeHeuristic
+                        && (fragmentHitCount >= 2 || (fragmentHitCount >= 1 && line ==~ halfwidthKatakana))
+
+                if (hasReplacementCharacter || hasLikelyMojibake) {
+                    String excerpt = line.trim()
+                    if (excerpt.length() > 120) {
+                        excerpt = excerpt.substring(0, 120) + '...'
+                    }
+                    failures << "${relativePath}:${index + 1} possible mojibake: ${excerpt}"
+                }
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            def shownFailures = failures.take(50).join(System.lineSeparator())
+            def omittedCount = failures.size() - Math.min(failures.size(), 50)
+            def omittedMessage = omittedCount > 0 ? "${System.lineSeparator()}... and ${omittedCount} more" : ''
+            throw new GradleException("Text encoding hygiene check failed:${System.lineSeparator()}${shownFailures}${omittedMessage}")
+        }
+    }
+}
+
+tasks.named('check').configure {
+    dependsOn tasks.named('checkTextEncodingHygiene')
 }
