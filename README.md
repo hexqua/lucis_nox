@@ -23,6 +23,8 @@ Windows の PowerShell では、`JDK21_HOME` を設定するか `%USERPROFILE%\.
 
 [`use-java.ps1`](scripts/use-java.ps1) は現在の PowerShell の環境変数を切り替えます。別の PowerShell プロセスで起動すると元のシェルには反映されません。Java toolchain とは別に、IDE の Project SDK / Gradle JVM も Java 21 に合わせます。
 
+スクリプトは環境変数を変更する前に、選んだ JDK の `release` ファイルからメジャーバージョンを照合します。指定したバージョンと異なる場合や判定できない場合は停止します。
+
 スクリプトが実行ポリシーでブロックされる場合は、現在の PowerShell だけに `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` を適用してから再実行します。組織のポリシーで変更できない場合は、[`AGENTS.md`](AGENTS.md) の手動 `JAVA_HOME` 切替を使います。
 
 - GameTest は `src/gameTest` を専用サーバーの `run/gametest` で実行します。クライアントの描画・操作は人間が `./gradlew.bat runClient` で確認します。

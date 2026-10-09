@@ -87,6 +87,21 @@ if ($null -eq $selectedJdk) {
 
 $javaHome = $selectedJdk.Path
 $javaBin = Join-Path $javaHome 'bin'
+# Validate the selected JDK before changing the current shell environment.
+$releasePath = Join-Path $javaHome 'release'
+if (-not (Test-Path -LiteralPath $releasePath -PathType Leaf)) {
+    throw "Cannot determine the JDK version: release file not found at $releasePath."
+}
+$releaseText = Get-Content -LiteralPath $releasePath -Encoding UTF8 -Raw
+$versionMatch = [regex]::Match($releaseText, '(?m)^JAVA_VERSION="(?<major>\d+)(?:[.\-+][^"]*)?"\s*$')
+if (-not $versionMatch.Success) {
+    throw "Cannot determine the JDK major version from $releasePath."
+}
+$actualMajorVersion = [int]$versionMatch.Groups['major'].Value
+if ($actualMajorVersion -ne [int]$Version) {
+    throw "Expected JDK $Version but found JDK $actualMajorVersion at $javaHome."
+}
+
 $pathParts = @($env:Path -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
 $env:JAVA_HOME = $javaHome
 $env:Path = (@($javaBin) + ($pathParts | Where-Object { $_ -ne $javaBin }) | Select-Object -Unique) -join ';'
