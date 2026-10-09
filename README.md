@@ -32,7 +32,6 @@ Windows の PowerShell では、`JDK21_HOME` を設定するか `%USERPROFILE%\.
 - `build` では `src/main/java` の廃止予定 API 利用と `@SuppressWarnings("removal")` をエラーとして検出します。単独実行は `./gradlew.bat checkProjectRemovalWarnings checkRemovalWarningSuppressions` です。
 - 共有 IDE 設定は Inspection profile のみです。個人の SDK パス・実行構成・workspace は共有しません。
 - 開発・レビュー・スキルの使い分けは [`AGENTS.md`](AGENTS.md)、PR CI と GitHub 保護設定の導入は [`docs/github-pr-protection.md`](docs/github-pr-protection.md) を参照してください。
-- 今回の運用基盤の採用範囲と見送り理由は [`docs/development-workflow-adoption.md`](docs/development-workflow-adoption.md) に記録しています。
 
 ## ライセンスや使用について
 
