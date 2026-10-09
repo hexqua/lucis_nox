@@ -16,24 +16,24 @@
 - 技術スタックやバージョンなどの実装条件は「2. 開発環境」に記載する。
 
 ## 2. 開発環境
-- 開発対象: Minecraft 1.21.1
-- Mod ローダー: NeoForge 21.1.219
-- 言語/実行環境: Java 21
+- 開発対象: Minecraft 1.20.1（`1.20.1-main` とその作業ブランチ）
+- Mod ローダー: Forge 47.4.10
+- 言語/実行環境: Java 17
 - ビルドツール: Gradle Wrapper（`./gradlew` / `./gradlew.bat`）
-- 必須依存 MOD: GeckoLib、Patchouli、Curios。バージョンは `gradle.properties` と `src/main/templates/META-INF/neoforge.mods.toml` を正とする。
+- 必須依存 MOD: GeckoLib、Patchouli、Curios。バージョンは `gradle.properties` と `src/main/templates/META-INF/mods.toml` を正とする。
 - セットアップ手順:
-1. 64bit の Java 21 をインストールし、`java -version` で確認する。
-2. 既定の Java が 21 以外の場合は、ビルド実行前に一時的に `JAVA_HOME` を切り替える。
-3. `./gradlew.bat --version` を実行し、JVM が Java 21 であることを確認する。
+1. 64bit の Java 17 をインストールし、`java -version` で確認する。
+2. 既定の Java が 17 以外の場合は、ビルド実行前に一時的に `JAVA_HOME` を切り替える。
+3. `./gradlew.bat --version` を実行し、JVM が Java 17 であることを確認する。
 4. 必要に応じて IDE の Gradle プロジェクト再読み込みを実施する。
-- ローカルでは `JDK21_HOME` を設定するか、`%USERPROFILE%\.jdks` / `%USERPROFILE%\.gradle\jdks` に JDK 21 を置き、`.\scripts\use-java.ps1` で現在の PowerShell の `JAVA_HOME` と `PATH` を切り替えられる。
-- Java toolchain の指定と Gradle Wrapper 自体の JVM は別である。IDE の Project SDK / Gradle JVM も Java 21 にそろえる。
+- ローカルでは `JDK17_HOME` を設定するか、`%USERPROFILE%\.jdks` / `%USERPROFILE%\.gradle\jdks` に JDK 17 を置き、`.\scripts\use-java.ps1` で現在の PowerShell の `JAVA_HOME` と `PATH` を切り替えられる。
+- Java toolchain の指定と Gradle Wrapper 自体の JVM は別である。IDE の Project SDK / Gradle JVM も Java 17 にそろえる。
 
 ## 3. 実行コマンド
-- PowerShell で Java 21 を一時適用（必要な場合）:
+- PowerShell で Java 17 を一時適用（必要な場合）:
 ```powershell
-# 必須: <<REPLACE_WITH_YOUR_JDK21_PATH>> を実際の JDK 21 パスに置換する
-$env:JAVA_HOME='<<REPLACE_WITH_YOUR_JDK21_PATH>>'
+# 必須: <<REPLACE_WITH_YOUR_JDK17_PATH>> を実際の JDK 17 パスに置換する
+$env:JAVA_HOME='<<REPLACE_WITH_YOUR_JDK17_PATH>>'
 $env:Path="$env:JAVA_HOME\bin;$env:Path"
 java -version
 ```
@@ -50,7 +50,7 @@ java -version
 Get-ChildItem build\libs\*.jar
 ```
 - 想定出力先:
-  `build\libs\<mod_id>-<mod_version>.jar`
+  `build\libs\<mod_id>-<mod_version>+mc1.20.1.jar`
 - 起動（開発クライアント）:
 ```powershell
 ./gradlew.bat runClient
@@ -67,7 +67,7 @@ Get-ChildItem build\libs\*.jar
 - `runGameTestServer` は `cleanGameTestServerWorld` により `run/gametest/world` を毎回削除してから起動する。通常の手動確認用 `run/world` は削除しない。IDE から Minecraft の実行構成を直接起動するだけでは、この Gradle の初期化処理は実行されない。
 - GameTest が一度でも失敗した場合は `.codex/skills/report-gametest-failure` を使い、後続の成功だけで初回失敗を省略しない。
 - `src/generated/resources/.cache` は Git 管理外であり、branch 切替や手動コピーで入った旧 JSON は `runData` だけでは消えない場合がある。削除・改名・移設では旧出力と build 出力側の残存も確認する。
-- IDE 実行構成の同期には `./gradlew.bat neoForgeIdeSync` を使う。共有する IDE 設定は `.idea/inspectionProfiles/Project_Default.xml` に限定し、個人の SDK パスや workspace は追跡しない。
+- IDE 実行構成の同期には `./gradlew.bat genIntellijRuns` を使う。共有する IDE 設定は `.idea/inspectionProfiles/Project_Default.xml` に限定し、個人の SDK パスや workspace は追跡しない。
 
 ### クライアント検証の分担
 - 通常の自動検証は `build`、必要な `runGameTestServer`、`runData`、静的解析・IDE Inspection とする。
@@ -93,12 +93,12 @@ Get-ChildItem build\libs\*.jar
 - コメント方針: コメント本文は原則日本語で、短く具体的に記述する。
 - 文字コード方針: テキストファイルは UTF-8（BOM なし）を原則とする。UTF-8 BOM はビルド失敗の要因になるため使用しない。
 - 依存関係追加の方針: 追加・更新するバージョンは `gradle.properties` に集約し、`build.gradle` から参照する。
-- 依存関係追加の方針: 必須依存を追加する場合は `src/main/templates/META-INF/neoforge.mods.toml` の dependency 定義も更新する。
+- 依存関係追加の方針: 必須依存を追加する場合は `src/main/templates/META-INF/mods.toml` の dependency 定義も更新する。
 - 依存関係追加の方針: 外部アセット/ライブラリ利用時は `THIRD_PARTY_NOTICES.md` の追記要否を必ず確認する。
 
 ## 5. 変更フロー
 1. 変更内容を 1〜2 文で決める（何を、なぜ変えるか）。
-   - `main` の共通機能・不具合修正では `.codex/skills/backport-ready-development` を使い、共通ロジック、NeoForge 固有コード、generated/resource、対象外を分けて考える。通常開発の一環として実際の backport は開始しない。
+   - 共通機能・不具合修正は原則として `main` で開発し、非 merge の個別 SHA を選んで backport する。1.20.1 / Forge 固有の修正はこのブランチで扱う。
 2. 実装する。
 3. 差分確認を行い、依頼範囲外のコメント削除/改変と文字化け差分がないことを確認する。
 4. `./gradlew.bat build` が成功することを確認する。実装変更では `./gradlew.bat runGameTestServer` も確認する。
@@ -108,13 +108,13 @@ Get-ChildItem build\libs\*.jar
 8. 通常開発は未コミットで引き渡す。機能ブランチ全体のレビューが必要な場合は `.codex/skills/review-feature-branch` を使う。レビュー完了はコミット許可を意味しない。
 
 ## 6. レビューチェックリスト
-- 必須チェック項目: Java 21 環境で `./gradlew.bat build` が成功すること。
+- 必須チェック項目: Java 17 環境で `./gradlew.bat build` が成功すること。
 - 必須チェック項目: 追加・変更した要素の登録漏れ（Registry/EventBus）がないこと。
 - 必須チェック項目: サーバー専用環境で問題となるクライアント専用参照を追加していないこと。
 - 必須チェック項目: 依頼範囲外の既存コメントが削除/改変されていないこと。
 - 必須チェック項目: 日本語文字列・コメントに文字化け（例: `縺` が連続する不自然な文字列）が混入していないこと。
 - リグレッション確認: 既存コンテンツの ID 変更や削除による互換性破壊を避ける。
-- リグレッション確認: 依存 MOD バージョン条件を変更した場合、`src/main/templates/META-INF/neoforge.mods.toml` と `gradle.properties` の整合性を確認する。
+- リグレッション確認: 依存 MOD バージョン条件を変更した場合、`src/main/templates/META-INF/mods.toml` と `gradle.properties` の整合性を確認する。
 
 ### レビューの判断基準
 - 実装 Finding は実行時・ビルド時・データ上の具体的な不具合を優先する。検証未実行や文書不足だけを実装不具合とせず、検証状況・残余リスク・必要な Note として区別する。
@@ -124,7 +124,7 @@ Get-ChildItem build\libs\*.jar
 - lang・モデル・レシピ・タグ等のリソース構成や一般的なバランス・表示設定は、依頼に沿った意図した変更を許容する。旧形式の互換変換や網羅的な移行表を一律に要求せず、利用者に再設定等が必要な場合は主要な影響を申し送る。保存資産の消失や world 読込不能を起こす変更には資産保護の規則を適用する。
 
 ## 7. ドキュメント更新
-- コード変更時に更新すべきファイル: `gradle.properties`（バージョン）、`build.gradle`（依存/タスク）、`src/main/templates/META-INF/neoforge.mods.toml`（依存条件）、`README.md`（仕様/導入手順）、`THIRD_PARTY_NOTICES.md`（ライセンス）、`.codex/skills/**`（エージェント向け手順）。
+- コード変更時に更新すべきファイル: `gradle.properties`（バージョン）、`build.gradle`（依存/タスク）、`src/main/templates/META-INF/mods.toml`（依存条件）、`README.md`（仕様/導入手順）、`THIRD_PARTY_NOTICES.md`（ライセンス）、`.codex/skills/**`（エージェント向け手順）。
 - 更新ルール: 実装変更と同一 PR/コミット内で関連ドキュメントを更新し、差分の理由が追跡できる状態にする。
 - 更新ルール: 実行手順や開発フローに影響する変更は `AGENTS.md` も同時更新する。
 - CI / GitHub 保護設定 / merge 運用の変更では `docs/github-pr-protection.md` も更新する。
@@ -137,16 +137,16 @@ Get-ChildItem build\libs\*.jar
 - Codex は明示依頼があってもリモートへ書き込まない。push、PR / Issue / コメント / Release の作成・更新、remote branch 変更、Actions の手動実行を含む。
 - 明示的な backport では、完成状態を人間へ提示するための `cherry-pick -x`、競合解消後の `cherry-pick --continue`、移植先固有の補正コミットを人間確認前に作成してよい。この例外を通常開発へ適用しない。
 
-### `main` の PR CI
-- `.github/workflows/pr-ci.yml` は `main` 向け `pull_request` で `build` と `gametest` を実行する。Java 21、SHA 固定 action、wrapper validation を使用し、secrets は使わず `GITHUB_TOKEN` は read-only とする。
-- 人間による `main` への取り込みは PR を使用する。通常変更は merge commit、バージョン更新だけ rebase merge を許容し、squash merge は使用しない。backport は merge commit ではなく個別コミットを選ぶ。
+### `1.20.1-main` の PR CI
+- `.github/workflows/pr-ci.yml` は `1.20.1-main` 向け `pull_request` で `build` と `gametest` を実行する。Java 17、SHA 固定 action、wrapper validation を使用し、secrets は使わず `GITHUB_TOKEN` は read-only とする。
+- 人間による `1.20.1-main` への取り込みは PR を使用する。通常変更は merge commit、バージョン更新だけ rebase merge を許容し、squash merge は使用しない。backport は merge commit ではなく個別コミットを選ぶ。
 - GitHub の required check と保護設定は、workflow の導入・成功確認後に人間が設定する。詳細は `docs/github-pr-protection.md` を参照し、ローカルファイルの追加だけで設定済みと扱わない。
 
 ## 9. ブランチ間取り込み（1.21.1 -> 1.20.1）
-- 基本方針: `main`（1.21.1 / NeoForge）を主系統とし、`1.20.1-main`（1.20.1 / Forge）への反映は backport で行う。
+- 基本方針: `main`（1.21.1 / NeoForge / Java 21）を主系統とし、`1.20.1-main`（1.20.1 / Forge）への反映は backport で行う。
 - 基本方針: `main` と `1.20.1-main` の直接 `merge` は原則禁止とし、必要な場合は事前合意を必須とする。
 - 基本方針: `merge` コミットの直接 `cherry-pick`（`git cherry-pick -m` を含む）と、擬似的なスカッシュコミットの backport は禁止とし、取り込み対象は個別コミット単位で扱う。
-- 実作業では `.codex/skills/backport-1-20-1-forge` を使用する。
+- 実作業では、このブランチの `.codex/skills/backport-1-20-1-forge` を使用する。初回移植と継続取り込みの区別・起点は `docs/backport-1.20.1.md` を参照する。
 - AGENTS.md では次の原則だけを常設ルールとして保持する。
 1. 取り込み前に対象コミットを個別 SHA で確定し、`git cherry-pick -x` を使う。
 2. 1 機能を独立した連続コミット系列として保ち、無関係な整形・rename・広域整理を同じ backport 対象に混ぜない。

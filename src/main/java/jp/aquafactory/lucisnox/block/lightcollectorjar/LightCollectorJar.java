@@ -1,12 +1,11 @@
 package jp.aquafactory.lucisnox.block.lightcollectorjar;
 
-import com.mojang.serialization.MapCodec;
 import jp.aquafactory.lucisnox.registry.BlockEntityRegistry;
 import jp.aquafactory.lucisnox.registry.ItemRegistry;
 import jp.aquafactory.lucisnox.utility.MessageTools;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -32,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class LightCollectorJar extends BaseEntityBlock {
-    public static final MapCodec<LightCollectorJar> CODEC = simpleCodec(LightCollectorJar::new);
     private static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 13.5D, 14.0D);
 
     public LightCollectorJar(Properties properties) {
@@ -47,11 +45,6 @@ public final class LightCollectorJar extends BaseEntityBlock {
 
     public LightCollectorJar() {
         this(Properties.of());
-    }
-
-    @Override
-    protected @NotNull MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
     }
 
     @Override
@@ -103,41 +96,42 @@ public final class LightCollectorJar extends BaseEntityBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack heldStack, @NotNull BlockState state, @NotNull Level level,
-                                                       @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand,
-                                                       @NotNull BlockHitResult hitResult) {
+    public @NotNull InteractionResult use(@NotNull BlockState state, @NotNull Level level,
+                                           @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand,
+                                           @NotNull BlockHitResult hitResult) {
+        ItemStack heldStack = player.getItemInHand(hand);
         if (hand != InteractionHand.MAIN_HAND) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS;
         }
 
         if (!(level.getBlockEntity(pos) instanceof LightCollectorJarBlockEntity blockEntity)) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS;
         }
 
         if (!heldStack.is(ItemRegistry.PHOSSHARD.get())) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            return InteractionResult.PASS;
         }
 
         if (!blockEntity.canAcceptPhosshard(heldStack)) {
             if (!level.isClientSide) {
                 MessageTools.sendActionBarError(player, "ui.lucisnox.light_collector_jar.cant_insert_more");
             }
-            return ItemInteractionResult.CONSUME;
+            return InteractionResult.CONSUME;
         }
 
         if (level.isClientSide) {
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (!blockEntity.startActiveGeneration(level.getGameTime())) {
             MessageTools.sendActionBarError(player, "ui.lucisnox.light_collector_jar.cant_insert_more");
-            return ItemInteractionResult.CONSUME;
+            return InteractionResult.CONSUME;
         }
 
         if (!player.getAbilities().instabuild) {
             heldStack.shrink(1);
         }
-        return ItemInteractionResult.CONSUME;
+        return InteractionResult.CONSUME;
     }
 
     @Override
@@ -150,7 +144,7 @@ public final class LightCollectorJar extends BaseEntityBlock {
         for (var stack : drops) {
             if (stack.is(ItemRegistry.LIGHT_COLLECTOR_JAR.get()) && blockEntity.getLevel() != null) {
                 // 能動生産状態は設置中のみ有効で、アイテム化時には失わせる.
-                blockEntity.saveToItemWithoutActiveState(stack, blockEntity.getLevel().registryAccess());
+                blockEntity.saveToItemWithoutActiveState(stack);
             }
         }
 

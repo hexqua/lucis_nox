@@ -5,7 +5,9 @@
       "conditions": {
         "items": [
           {
-            "items": "lucisnox:phosshard"
+            "items": [
+              "lucisnox:phosshard"
+            ]
           }
         ]
       },
@@ -20,13 +22,14 @@
   },
   "requirements": [
     [
-      "has_the_recipe",
-      "has_phosshard"
+      "has_phosshard",
+      "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
       "lucisnox:light_collector_jar"
     ]
-  }
+  },
+  "sends_telemetry_event": false
 }

@@ -4,8 +4,8 @@ import jp.aquafactory.lucisnox.LucisNox;
 import jp.aquafactory.lucisnox.registry.BlockRegistry;
 import jp.aquafactory.lucisnox.registry.ItemRegistry;
 import net.minecraft.data.PackOutput;
-import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
-import net.neoforged.neoforge.common.data.ExistingFileHelper;
+import net.minecraftforge.client.model.generators.BlockStateProvider;
+import net.minecraftforge.common.data.ExistingFileHelper;
 
 public final class BlockStateGenerator extends BlockStateProvider {
     public BlockStateGenerator(PackOutput output, ExistingFileHelper existingFileHelper) {

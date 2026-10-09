@@ -4,9 +4,10 @@ import jp.aquafactory.lucisnox.LucisNox;
 import jp.aquafactory.lucisnox.registry.BlockRegistry;
 import java.util.List;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BiomeTags;
@@ -23,9 +24,9 @@ import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
-import net.neoforged.neoforge.common.world.BiomeModifier;
-import net.neoforged.neoforge.common.world.BiomeModifiers;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.minecraftforge.common.world.BiomeModifier;
+import net.minecraftforge.common.world.ForgeBiomeModifiers;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public final class LucisNoxWorldgen {
     public static final ResourceKey<ConfiguredFeature<?, ?>> PHOSSHARD_ORE_CONFIGURED =
@@ -33,11 +34,11 @@ public final class LucisNoxWorldgen {
     public static final ResourceKey<PlacedFeature> PHOSSHARD_ORE_PLACED =
             createKey(Registries.PLACED_FEATURE, "phosshard_ore");
     public static final ResourceKey<BiomeModifier> ADD_PHOSSHARD_ORE =
-            createKey(NeoForgeRegistries.Keys.BIOME_MODIFIERS, "add_phosshard_ore");
+            createKey(ForgeRegistries.Keys.BIOME_MODIFIERS, "add_phosshard_ore");
 
     private LucisNoxWorldgen() {}
 
-    public static void bootstrapConfiguredFeatures(BootstrapContext<ConfiguredFeature<?, ?>> context) {
+    public static void bootstrapConfiguredFeatures(BootstapContext<ConfiguredFeature<?, ?>> context) {
         var configuration = new OreConfiguration(List.of(
                 OreConfiguration.target(
                         new TagMatchTest(BlockTags.STONE_ORE_REPLACEABLES),
@@ -52,7 +53,7 @@ public final class LucisNoxWorldgen {
         context.register(PHOSSHARD_ORE_CONFIGURED, new ConfiguredFeature<>(Feature.ORE, configuration));
     }
 
-    public static void bootstrapPlacedFeatures(BootstrapContext<PlacedFeature> context) {
+    public static void bootstrapPlacedFeatures(BootstapContext<PlacedFeature> context) {
         Holder<ConfiguredFeature<?, ?>> configuredFeature =
                 context.lookup(Registries.CONFIGURED_FEATURE).getOrThrow(PHOSSHARD_ORE_CONFIGURED);
 
@@ -64,18 +65,18 @@ public final class LucisNoxWorldgen {
         )));
     }
 
-    public static void bootstrapBiomeModifiers(BootstrapContext<BiomeModifier> context) {
+    public static void bootstrapBiomeModifiers(BootstapContext<BiomeModifier> context) {
         HolderSet.Named<Biome> overworldBiomes = context.lookup(Registries.BIOME).getOrThrow(BiomeTags.IS_OVERWORLD);
         Holder<PlacedFeature> placedFeature = context.lookup(Registries.PLACED_FEATURE).getOrThrow(PHOSSHARD_ORE_PLACED);
 
-        context.register(ADD_PHOSSHARD_ORE, new BiomeModifiers.AddFeaturesBiomeModifier(
+        context.register(ADD_PHOSSHARD_ORE, new ForgeBiomeModifiers.AddFeaturesBiomeModifier(
                 overworldBiomes,
                 HolderSet.direct(placedFeature),
                 GenerationStep.Decoration.UNDERGROUND_ORES
         ));
     }
 
-    private static <T> ResourceKey<T> createKey(ResourceKey<? extends net.minecraft.core.Registry<T>> registryKey, String path) {
+    private static <T> ResourceKey<T> createKey(ResourceKey<? extends Registry<T>> registryKey, String path) {
         return ResourceKey.create(registryKey, ResourceLocation.fromNamespaceAndPath(LucisNox.MODID, path));
     }
 }

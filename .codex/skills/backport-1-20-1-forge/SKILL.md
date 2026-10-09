@@ -1,15 +1,17 @@
 ---
 name: backport-1-20-1-forge
-description: 1.21.1 NeoForge の `main` から 1.20.1 Forge の `1.20.1-main` へ変更を backport するときの標準手順。`git cherry-pick -x`、個別 SHA の選定、NeoForge/Forge 差分の確認、generated cleanup、build 検証、擬似スカッシュや merge commit の回避が必要な作業で使う。
+description: 1.21.1 NeoForge の `main` から 1.20.1 Forge の `1.20.1-main` へ変更を backport するときの標準手順。`git cherry-pick -x`、個別 SHA の選定、NeoForge/Forge 差分の確認、generated cleanup、Java 17 の build/GameTest 検証、擬似スカッシュや merge commit の回避が必要な作業で使う。
 ---
 
 # Backport 1.20.1 Forge
 
 ## Overview
 
-`main` から `1.20.1-main` へ変更を戻すときの専用手順を扱う。通常の実装タスクとして進めず、対象 SHA の確定、取り込み順、loader 差分確認、generated cleanup、build 検証を先に固定する。
+`main` から `1.20.1-main` へ変更を戻すときの専用手順を扱う。移植先は Minecraft 1.20.1 / Forge / Java 17。このブランチでの通常の固有修正と区別し、対象 SHA の確定、取り込み順、loader 差分確認、generated cleanup、build 検証を先に固定する。
 
 ## Quick Start
+
+初回の起点・作業ブランチは `docs/backport-1.20.1.md` を参照する。初回分岐で継承済みの履歴を再 cherry-pick しない。
 
 1. 取り込み対象の非 `merge` コミットを列挙し、個別 SHA を確定する。
 2. `references/port-checklist.md` を読み、`cherry-pick`、cleanup、検証までの順序を固定する。
@@ -27,7 +29,7 @@ description: 1.21.1 NeoForge の `main` から 1.20.1 Forge の `1.20.1-main` �
 
 ### 2. 先に止まる条件を確認する
 
-- `1.20.1-main` がまだ存在しない場合は、branch の作成や remote への push を自分で進めず、人間に確認する。
+- `1.20.1-main` が存在せず新規作成の依頼もない場合は、作成方針を人間に確認する。明示されたローカル作成の依頼はその範囲で実施してよい。
 - remote への非 GET 操作は行わない。`git push`、PR 作成、remote branch 更新は人間に委ねる。
 - 1.20.1 Forge 側でしか成立しない暫定回避を `main` に逆流させない。
 
@@ -46,8 +48,10 @@ description: 1.21.1 NeoForge の `main` から 1.20.1 Forge の `1.20.1-main` �
 ### 5. 最後に検証する
 
 - `git diff --name-status` で取り込み漏れや不要差分を確認する。
-- `./gradlew.bat build` を対象ブランチで成功させる。
-- 必要なら `runClient` を使うが、GUI 起動が不要な確認では build 成功を優先する。
+- `.\scripts\use-java.ps1` で Java 17 を適用し、Gradle JVM も確認する。
+- `./gradlew.bat build` と `./gradlew.bat runGameTestServer` を対象ブランチで成功させる。実行の yield は完了と扱わない。
+- GameTest が一度でも失敗した場合は `report-gametest-failure` で初回失敗も報告する。
+- client の確認は `report-client-verification` で人間向けシナリオを提示する。GUI 起動は明示依頼がある場合だけ実施する。
 
 ## References
 

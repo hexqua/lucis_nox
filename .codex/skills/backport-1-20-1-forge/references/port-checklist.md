@@ -9,7 +9,7 @@
 5. datagen や resource の削除・改名・移動を含む場合は、先に cleanup 範囲を決める。
 6. 必要に応じて `./gradlew.bat runData` を実行し、生成物を再確認する。
 7. `git diff --name-status` を確認し、不要差分、取り込み漏れ、古い生成物の残留がないことを確認する。
-8. `./gradlew.bat build` を実行し、対象ブランチで検証を完了する。
+8. Java 17 で `./gradlew.bat build` と `./gradlew.bat runGameTestServer` を実行し、対象ブランチで検証を完了する。
 
 ## 実務ルール
 

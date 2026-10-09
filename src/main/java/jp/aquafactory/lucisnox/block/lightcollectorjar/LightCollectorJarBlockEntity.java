@@ -4,17 +4,16 @@ import jp.aquafactory.lucisnox.registry.BlockEntityRegistry;
 import jp.aquafactory.lucisnox.registry.ItemRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -80,22 +79,16 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
         return true;
     }
 
-    public void saveToItemWithoutActiveState(ItemStack stack, HolderLookup.Provider registries) {
-        saveToItem(stack, registries);
-
-        var customData = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
-        if (customData.isEmpty()) {
-            return;
-        }
-
-        var tag = customData.copyTag();
+    public void saveToItemWithoutActiveState(ItemStack stack) {
+        // 1.20.1 の BlockItem は BlockEntityTag を設置時に復元する。
+        var tag = saveWithoutMetadata();
         tag.remove(ACTIVE_GENERATION_UNTIL_TAG);
         if (!tag.contains(STORED_LICHT_TAG)) {
-            stack.remove(DataComponents.BLOCK_ENTITY_DATA);
+            stack.removeTagKey("BlockEntityTag");
             return;
         }
 
-        stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(tag));
+        BlockItem.setBlockEntityData(stack, getType(), tag);
     }
 
     @Override
@@ -107,8 +100,8 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
     }
 
     @Override
-    protected void saveAdditional(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
-        super.saveAdditional(tag, registries);
+    protected void saveAdditional(@NotNull CompoundTag tag) {
+        super.saveAdditional(tag);
         if (storedLicht > 0) {
             tag.putInt(STORED_LICHT_TAG, storedLicht);
         }
@@ -118,17 +111,17 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
     }
 
     @Override
-    protected void loadAdditional(@NotNull CompoundTag tag, HolderLookup.@NotNull Provider registries) {
-        super.loadAdditional(tag, registries);
+    public void load(@NotNull CompoundTag tag) {
+        super.load(tag);
         storedLicht = Mth.clamp(tag.getInt(STORED_LICHT_TAG), 0, MAX_LICHT);
         activeGenerationUntilGameTime = Math.max(0L, tag.getLong(ACTIVE_GENERATION_UNTIL_TAG));
         lastCollectionGameTime = UNINITIALIZED_GAME_TIME;
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag(HolderLookup.@NotNull Provider registries) {
+    public @NotNull CompoundTag getUpdateTag() {
         var tag = new CompoundTag();
-        saveAdditional(tag, registries);
+        saveAdditional(tag);
         return tag;
     }
 
@@ -153,7 +146,7 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
             return ItemStack.EMPTY;
         }
 
-        return ItemRegistry.PHOSSHARD.toStack();
+        return new ItemStack(ItemRegistry.PHOSSHARD.get());
     }
 
     @Override
@@ -195,7 +188,7 @@ public final class LightCollectorJarBlockEntity extends BlockEntity implements W
     }
 
     @Override
-    public boolean canTakeItem(@NotNull net.minecraft.world.Container target, int slot, @NotNull ItemStack stack) {
+    public boolean canTakeItem(@NotNull Container target, int slot, @NotNull ItemStack stack) {
         return false;
     }
 

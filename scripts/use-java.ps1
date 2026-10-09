@@ -1,6 +1,6 @@
 param(
     [ValidateSet('17', '21')]
-    [string]$Version = '21',
+    [string]$Version = '17',
     [switch]$StopGradleDaemons,
     [switch]$SkipGradleCheck
 )

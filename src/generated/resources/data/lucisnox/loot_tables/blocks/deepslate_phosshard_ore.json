@@ -13,20 +13,18 @@
                 {
                   "condition": "minecraft:match_tool",
                   "predicate": {
-                    "predicates": {
-                      "minecraft:enchantments": [
-                        {
-                          "enchantments": "minecraft:silk_touch",
-                          "levels": {
-                            "min": 1
-                          }
+                    "enchantments": [
+                      {
+                        "enchantment": "minecraft:silk_touch",
+                        "levels": {
+                          "min": 1
                         }
-                      ]
-                    }
+                      }
+                    ]
                   }
                 }
               ],
-              "name": "lucisnox:phosshard_ore"
+              "name": "lucisnox:deepslate_phosshard_ore"
             },
             {
               "type": "minecraft:item",
@@ -60,5 +58,5 @@
       "rolls": 1.0
     }
   ],
-  "random_sequence": "lucisnox:blocks/phosshard_ore"
+  "random_sequence": "lucisnox:blocks/deepslate_phosshard_ore"
 }

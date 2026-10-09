@@ -2,18 +2,18 @@
 
 ## 概要
 
-光をテーマにした1.21.1Neoforge向け魔術MODです。
+光をテーマにした1.21.1Neoforge向け魔術MODの1.20.1backport版です。
 
 ## 導入方法
 
 - `mods`配下に`jar`を入れればOKです。
-- Minecraft 1.21.1 / NeoForge 用の GeckoLib、Patchouli、Curios が必要です。対応バージョンは [`gradle.properties`](gradle.properties) と MOD の依存定義を参照してください。
+- Minecraft 1.20.1 / Forge 用の GeckoLib、Patchouli、Curios が必要です。対応バージョンは [`gradle.properties`](gradle.properties) と MOD の依存定義を参照してください。
 
 ## 開発環境
 
-`main` は Minecraft 1.21.1 / NeoForge / Java 21 の開発基準です。`1.20.1-main` 向けの変更は個別に選んで backport します。
+`1.20.1-main` とその作業ブランチは Minecraft 1.20.1 / Forge / Java 17 の開発環境です。主系統の `main` は Minecraft 1.21.1 / NeoForge / Java 21 を維持し、共通変更は個別に選んで backport します。運用は [`docs/backport-1.20.1.md`](docs/backport-1.20.1.md) を参照してください。
 
-Windows の PowerShell では、`JDK21_HOME` を設定するか `%USERPROFILE%\.jdks` / `%USERPROFILE%\.gradle\jdks` に JDK 21 を置いてから実行してください。
+Windows の PowerShell では、`JDK17_HOME` を設定するか `%USERPROFILE%\.jdks` / `%USERPROFILE%\.gradle\jdks` に JDK 17 を置いてから実行してください。
 
 ```powershell
 .\scripts\use-java.ps1
@@ -21,17 +21,18 @@ Windows の PowerShell では、`JDK21_HOME` を設定するか `%USERPROFILE%\.
 ./gradlew.bat runGameTestServer
 ```
 
-[`use-java.ps1`](scripts/use-java.ps1) は現在の PowerShell の環境変数を切り替えます。別の PowerShell プロセスで起動すると元のシェルには反映されません。Java toolchain とは別に、IDE の Project SDK / Gradle JVM も Java 21 に合わせます。
+[`use-java.ps1`](scripts/use-java.ps1) は現在の PowerShell の環境変数を切り替えます。別の PowerShell プロセスで起動すると元のシェルには反映されません。Java toolchain とは別に、IDE の Project SDK / Gradle JVM も Java 17 に合わせます。
 
-スクリプトは環境変数を変更する前に、選んだ JDK の `release` ファイルからメジャーバージョンを照合します。指定したバージョンと異なる場合や判定できない場合は停止します。
+このブランチのスクリプトの既定は Java 17 です。スクリプトは環境変数を変更する前に、選んだ JDK の `release` ファイルからメジャーバージョンを照合します。指定したバージョンと異なる場合や判定できない場合は停止します。
 
 スクリプトが実行ポリシーでブロックされる場合は、現在の PowerShell だけに `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` を適用してから再実行します。組織のポリシーで変更できない場合は、[`AGENTS.md`](AGENTS.md) の手動 `JAVA_HOME` 切替を使います。
 
 - GameTest は `src/gameTest` を専用サーバーの `run/gametest` で実行します。クライアントの描画・操作は人間が `./gradlew.bat runClient` で確認します。
 - `runGameTestServer` は起動前に `run/gametest/world` を毎回削除し、初期状態から検証します。通常の開発ワールド `run/world` は保持します。IDE の直接起動ではこの初期化は行われません。
-- データ生成は `./gradlew.bat runData`、IDE 実行構成の同期は `./gradlew.bat neoForgeIdeSync` です。通常の検証では `clean` を付けません。
+- データ生成は `./gradlew.bat runData`、IDE 実行構成の同期は `./gradlew.bat genIntellijRuns` です。通常の検証では `clean` を付けません。
 - `build` には UTF-8 BOM・不正な UTF-8・明らかな文字化けの検査を含みます。単独実行は `./gradlew.bat checkTextEncodingHygiene` です。
 - `build` では `src/main/java` の廃止予定 API 利用と `@SuppressWarnings("removal")` をエラーとして検出します。単独実行は `./gradlew.bat checkProjectRemovalWarnings checkRemovalWarningSuppressions` です。
+- 配布 jar は `build/libs/lucisnox-<mod_version>+mc1.20.1.jar` です。`build` 時に Forge の再難読化を行います。
 - 共有 IDE 設定は Inspection profile のみです。個人の SDK パス・実行構成・workspace は共有しません。
 - 開発・レビュー・スキルの使い分けは [`AGENTS.md`](AGENTS.md)、PR CI と GitHub 保護設定の導入は [`docs/github-pr-protection.md`](docs/github-pr-protection.md) を参照してください。
 

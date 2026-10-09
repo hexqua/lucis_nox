@@ -22,7 +22,7 @@ Findingは、差分が生む実行時・ビルド時・データ上の不具合�
 - Minecraft/loader: Registry/EventBus、server/client分離、datagen、resource schema、専用サーバー起動を壊さないか。
 - 互換性: content ID、設定キー、NBT・保存データ、recipe/tag、外部MOD連携を不用意に変更しないか。
 - Resource: generatedと手置きJSONの重複、削除・改名後のstale出力、翻訳キー漏れがないか。
-- 依存: `gradle.properties`、`build.gradle`、`neoforge.mods.toml`、third-party noticeが整合するか。
+- 依存: `gradle.properties`、`build.gradle`、`mods.toml`、third-party noticeが整合するか。
 - テスト: 変更を失敗させる回帰テスト、必要なGameTest、client目視、optional MOD検証があるか。
 - 差分品質: 無関係な整形・rename・コメント削除・文字化け・機密情報が混ざっていないか。
 

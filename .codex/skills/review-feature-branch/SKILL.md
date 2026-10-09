@@ -21,7 +21,7 @@ description: "機能ブランチ全体をbase branchと比較し、PR作成前�
    - 詳細な判定基準は[Readiness確認](references/readiness-checks.md)を読む。
 3. 累積結果をレビューする。
    - 最終的なコード、resource、datagen、設定、依存、テスト、ドキュメントが互いに整合するか確認する。
-   - mainからのbackport候補では`backport-ready-development`の結果とコミット境界も確認する。
+   - backport では `backport-1-20-1-forge` の検証結果、移植元 SHA と Forge 固有補正のコミット境界を確認する。
    - client由来の入力でserver側の状態を変更する機能では`review-client-server-authority`を使用し、許容する挙動と拒否すべき境界のテストを確認する。
 4. PRの外部状態を確認する。
    - PRが存在し、GitHubへのread-onlyアクセスが利用できる場合は、checks、review、conversation、Codex Cloudの結果を取得する。
