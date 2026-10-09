@@ -1,0 +1,121 @@
+name: Feature suggestion
+description: Suggest an idea for a new feature, adjustment, or mod compatibility.
+title: "[Suggestion]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your Lucis Nox suggestion.
+
+        Please note:
+
+        - Submitting a suggestion does not guarantee implementation.
+        - This is a personal mod project. Suggestions that do not fit the mod concept may be closed without implementation.
+        - Requests to recreate specific mechanics, characters, weapons, spells, or effects from anime/games are generally not accepted.
+        - Bug reports should use the bug report template instead.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I understand that this suggestion may not be implemented.
+          required: true
+        - label: I understand that suggestions outside the mod concept may be declined.
+          required: true
+        - label: This is not a request to recreate a specific anime/game mechanic, character, weapon, spell, or effect.
+          required: true
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+
+  - type: dropdown
+    id: suggestion-type
+    attributes:
+      label: Suggestion type
+      options:
+        - New item
+        - Balance adjustment
+        - Quality of life
+        - Config / datapack support
+        - Compatibility / integration with another mod
+        - Documentation / tooltip improvement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the suggestion.
+      placeholder: "Example: Add a config option to disable X behavior."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Explain why this feature would be useful.
+      placeholder: "Example: Currently, players cannot..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-behavior
+    attributes:
+      label: Proposed behavior
+      description: Describe how the feature should work.
+      placeholder: |
+        Example:
+        - When the player does X...
+        - The item/spell should...
+        - It should not...
+    validations:
+      required: true
+
+  - type: textarea
+    id: fit
+    attributes:
+      label: Why does this fit this mod?
+      description: Explain why this suggestion fits Lucis Nox, a standalone magic mod themed around light, its balance, or its existing mechanics.
+      placeholder: "Example: This fits because the mod already has..."
+    validations:
+      required: true
+
+  - type: input
+    id: minecraft-version
+    attributes:
+      label: Minecraft version, if relevant
+      placeholder: "Example: 1.20.1 / 1.21.1 / not version-specific"
+    validations:
+      required: false
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility target, if relevant
+      description: If this is a compatibility or integration request, write the target mod name, version, and what kind of interaction you want.
+      placeholder: |
+        Target mod:
+        Target mod version:
+        Desired interaction:
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References, if any
+      description: You may include references for inspiration, but direct recreation requests are generally not accepted.
+      placeholder: "Links, screenshots, videos, or examples. Please explain what part is relevant."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context, screenshots, mockups, or examples here.
+    validations:
+      required: false
